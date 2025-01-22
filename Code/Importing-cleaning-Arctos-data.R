@@ -1,24 +1,112 @@
-###### Importing and cleaning data
-###Import raw data
+library(tidyverse)
+library(dplyr)
 
-### filtering
+######## Importing and cleaning data #####################################
+#####Import raw data
+Arctos_birds_Calif_2000_2020 <- read.csv("./Data/Arctos_birds_Calif_2000_2020.csv")
+
+##### filtering
 ## Remove entries w/ 'parts' that are just eggs, nests, or blood ###
-df <- df_known %>% filter(!(parts=="egg" | parts  =="egg; nest" | parts == "nest; egg" | parts == "media; egg"))
+df <- Arctos_birds_Calif_2000_2020 %>% filter(!(parts=="egg" | parts  =="egg; nest" | parts == "nest; egg" | parts == "media; egg"))
 df2 <- df %>% filter(!(parts=="blood" | parts  =="blood; blood" | parts == "blood; blood; blood" | parts == "blood; blood; blood; blood"))
 
 ## remove entries with 'parts' that are 'unknown' or 'nest', as well as 'age' embryo or chick
 df3 <- df2 %>% filter(!(parts=="nest" | parts  =="unknown"))
 df4 <- df3 %>% filter(!(age == "embryo" | age == "chick" | age == "downy chick" | age == "downy chick, completely covered in fuzz, eyes still closed" | age == "naked chick, eyes closed" | age == "downy chick, fuzz on body, eyes not open" | age == "downy chick, pre-fledge" | age == "downy fledgling" | age == "not yet fully fledged, still downy" | age == "skull unossified, downy (only slightly fuzzy on head & backside of the body" | age == "skull unossified, naked & downy (some fuzz on head and backside, eyes still closed)" | age == "skull unossified, transitioning from naked to downy, eyes closed" | age == "skull unossified, downy, eyes closed" | age == "skull unossified, between naked and downy (some fuzz on head and backside, eyes still closed)")) 
 
+Arctos_all <- df4
+## separate out entries that have an empty slot for collecting method
+#Arctos_all$coll_method_2 <- ifelse(is.na(df4$collecting_method), "unknown","known")
+Arctos_all$coll_method_2 <- ifelse(Arctos_all$collecting_method == "", "unknown","known")
+
+Arctos_known <- Arctos_all[which(Arctos_all$coll_method_2 == "known"),]
+Arctos_unknown <- Arctos_all[which(Arctos_all$coll_method_2 == "unknown"),]
 
 
-### assign as salvage vs actively collected
-### Assign entries as 'salvage' if parts are just tissue/tissue sample/wing
-df41 <- df4 %>% mutate(coll_method_5 = ifelse(df4$parts=="tissue" | df4$parts == "tissue; tissue sample" | df4$parts == "wing; tissue", "salvage", "unknown"))
+##### assign as salvage vs actively collected
 
-### assign as 'salvage' based on specimen locality ####
-df51 <- df41 %>% 
-  mutate(coll_method_6 = ifelse(spec_locality == "Aviary in Oakland" | spec_locality == "aviary of Monica J. Albe, Oakland" | spec_locality == "San Diego Zoo" | spec_locality == "CAPTIVE, San Diego Zoo [probably]" | spec_locality == "CAPTIVE, San Diego Zoo" | spec_locality == "San Francisco Zoo, San Francisco" | spec_locality == "Zoological Society of San Diego" | spec_locality == "Zoological Society of San Diego, CAPTIVE" | spec_locality == "CAPTIVE Zoological Societ of San Diego" | spec_locality == "CAPTIVE Zoological Society of San Diego" | spec_locality == " San Diego: Sea World CAPTIVE" | spec_locality == "Amador High School, 1155 Santa Rita Rd., Pleasanton" | spec_locality == "Pittsburg High School, Pittsburg" | spec_locality == "no specific locality recorded" | spec_locality == "unknown" | spec_locality == "Life Sciences Building courtyard, University of California campus, Berkeley" | spec_locality == "Natural Resources Building, Mineral" | spec_locality == "Outside Earth and Marine Sciences Building, University of California, Santa Cruz" | spec_locality == "near south door of Valley Life Sciences Building, University of California campus, Berkeley" | spec_locality == "near Protein Design Labs (34801 Campus Drive), near Dumbarton Bridge, Fremont" | spec_locality == "W side of Dwinelle Hall, Univ. Calif. campus, Berkeley" | spec_locality == "in vicinity of breezeway between Birge and LeConte Halls, University of California campus, Berkeley" | spec_locality == "Stadium Rim Way between Centennial Rd. and Galey Rd., University of California campus, Berkeley" | spec_locality == "University of California campus, Berkeley" | spec_locality == "University of California Riverside campus, Riverside" | spec_locality == "north side of Hildebrand Hall, University of California campus, Berkeley" | spec_locality == "east side of Lewis Hall, University of California Berkeley campus" |spec_locality == "Unit 2 Dormitory, between Channing and Haste Streets, Berkeley" | spec_locality == "Strawberry Creek Lodge (1320 Addison Street), Berkeley" | spec_locality == "Davis" | spec_locality == "University of California Botanical Garden, Strawberry Canyon, Berkeley" | spec_locality == "Berkeley" | spec_locality == "Life Sciences Addition, University of California, Berkeley" | spec_locality == "Donner Lab, University of California, Berkeley" | spec_locality == "California Hall, University of California, Berkeley" | spec_locality == "Women's Faculty Club, University of California, Berkeley" | spec_locality == "Linsdale Library, Hastings Natural History Reservation" | spec_locality == "San Rafael, 24 Madrona Street" | spec_locality == "San Diego: Sea World CAPTIVE" | spec_locality == "Edwards AFB" | spec_locality == "classroom at Hastings Natural History Reservation" | spec_locality == "labs at Hastings Natural History Reservation, Carmel Valley" | spec_locality == "Lawrence Livermore National Lab" | spec_locality == "outside the Davis Lab, Hastings Natural History Reservation, Carmel Valley" | spec_locality == "Sacramento" | spec_locality == "El Cerrito" | spec_locality == "Ojai" | spec_locality == "Livermore" | spec_locality == "Inverness" | spec_locality == "Bolinas" | spec_locality == "Oakland" | spec_locality == "Pittsburg" | spec_locality == "Pleasant Valley" | spec_locality == "Bethel Island" | spec_locality == "Woodacre" | spec_locality == "Jamesburg" | spec_locality == "Nicasio" | spec_locality == "La Casa de Maria, 801 Ladera Lane, Santa Barbara" | spec_locality == "Anaheim" | spec_locality == "Pt. Mugu Naval Base, Air National Guard hanger" | spec_locality == "Carmel Valley" | spec_locality == "Hopland Research and Extension Center bunkhouse" | spec_locality == "Wildlife Gallery, Bolinas" | spec_locality == "Alameda Naval Station, Alameda" | spec_locality == "Mills College, Oakland", "salvage", "unknown"))
+## Assign entries as 'salvage' if parts are just tissue/tissue sample/wing
+
+df5 <- Arctos_unknown %>% mutate(coll_method_3 = ifelse(Arctos_unknown$parts=="tissue" | Arctos_unknown$parts == "tissue; tissue sample" | Arctos_unknown$parts == "wing; tissue", "salvage", "unknown"))
+
+## assign as 'salvage' based on specimen locality ####
+df6 <- df5 %>% 
+  mutate(coll_method_4 = ifelse(spec_locality == "Aviary in Oakland" | 
+                                  spec_locality == "aviary of Monica J. Albe, Oakland" | 
+                                  spec_locality == "San Diego Zoo" | 
+                                  spec_locality == "CAPTIVE, San Diego Zoo [probably]" | 
+                                  spec_locality == "CAPTIVE, San Diego Zoo" | 
+                                  spec_locality == "San Francisco Zoo, San Francisco" | 
+                                  spec_locality == "Zoological Society of San Diego" | 
+                                  spec_locality == "Zoological Society of San Diego, CAPTIVE" | 
+                                  spec_locality == "CAPTIVE Zoological Societ of San Diego" | 
+                                  spec_locality == "CAPTIVE Zoological Society of San Diego" | 
+                                  spec_locality == " San Diego: Sea World CAPTIVE" | 
+                                  spec_locality == "Amador High School, 1155 Santa Rita Rd., Pleasanton" | 
+                                  spec_locality == "Pittsburg High School, Pittsburg" | 
+                                  spec_locality == "no specific locality recorded" | 
+                                  spec_locality == "unknown" | 
+                                  spec_locality == "Life Sciences Building courtyard, University of California campus, Berkeley" | 
+                                  spec_locality == "Natural Resources Building, Mineral" | 
+                                  spec_locality == "Outside Earth and Marine Sciences Building, University of California, Santa Cruz" | 
+                                  spec_locality == "near south door of Valley Life Sciences Building, University of California campus, Berkeley" | 
+                                  spec_locality == "near Protein Design Labs (34801 Campus Drive), near Dumbarton Bridge, Fremont" | 
+                                  spec_locality == "W side of Dwinelle Hall, Univ. Calif. campus, Berkeley" | 
+                                  spec_locality == "in vicinity of breezeway between Birge and LeConte Halls, University of California campus, Berkeley" | 
+                                  spec_locality == "Stadium Rim Way between Centennial Rd. and Galey Rd., University of California campus, Berkeley" | 
+                                  spec_locality == "University of California campus, Berkeley" | 
+                                  spec_locality == "University of California Riverside campus, Riverside" | 
+                                  spec_locality == "north side of Hildebrand Hall, University of California campus, Berkeley" | 
+                                  spec_locality == "east side of Lewis Hall, University of California Berkeley campus" |
+                                  spec_locality == "Unit 2 Dormitory, between Channing and Haste Streets, Berkeley" | 
+                                  spec_locality == "Strawberry Creek Lodge (1320 Addison Street), Berkeley" | 
+                                  spec_locality == "Davis" | 
+                                  spec_locality == "University of California Botanical Garden, Strawberry Canyon, Berkeley" | 
+                                  spec_locality == "Berkeley" | 
+                                  spec_locality == "Life Sciences Addition, University of California, Berkeley" | 
+                                  spec_locality == "Donner Lab, University of California, Berkeley" | 
+                                  spec_locality == "California Hall, University of California, Berkeley" | 
+                                  spec_locality == "Women's Faculty Club, University of California, Berkeley" | 
+                                  spec_locality == "Linsdale Library, Hastings Natural History Reservation" | 
+                                  spec_locality == "San Rafael, 24 Madrona Street" | 
+                                  spec_locality == "San Diego: Sea World CAPTIVE" | 
+                                  spec_locality == "Edwards AFB" | 
+                                  spec_locality == "classroom at Hastings Natural History Reservation" | 
+                                  spec_locality == "labs at Hastings Natural History Reservation, Carmel Valley" | 
+                                  spec_locality == "Lawrence Livermore National Lab" | 
+                                  spec_locality == "outside the Davis Lab, Hastings Natural History Reservation, Carmel Valley" | 
+                                  spec_locality == "Sacramento" | 
+                                  spec_locality == "El Cerrito" | 
+                                  spec_locality == "Ojai" | 
+                                  spec_locality == "Livermore" | 
+                                  spec_locality == "Inverness" | 
+                                  spec_locality == "Bolinas" | 
+                                  spec_locality == "Oakland" | 
+                                  spec_locality == "Pittsburg" | 
+                                  spec_locality == "Pleasant Valley" | 
+                                  spec_locality == "Bethel Island" | 
+                                  spec_locality == "Woodacre" | 
+                                  spec_locality == "Jamesburg" | 
+                                  spec_locality == "Nicasio" | 
+                                  spec_locality == "La Casa de Maria, 801 Ladera Lane, Santa Barbara" | 
+                                  spec_locality == "Anaheim" | 
+                                  spec_locality == "Pt. Mugu Naval Base, Air National Guard hanger" | 
+                                  spec_locality == "Carmel Valley" | 
+                                  spec_locality == "Hopland Research and Extension Center bunkhouse" | 
+                                  spec_locality == "Wildlife Gallery, Bolinas" | 
+                                  spec_locality == "Alameda Naval Station, Alameda" | 
+                                  spec_locality == "Mills College, Oakland", "salvage", "unknown"))
+
+
+df7 <- df6 %>% mutate(coll_method = ifelse(coll_method_3 == "salvage" | coll_method_4 == "salvage","salvage", "unknown"))
+
+## assign as salvage if locality is an address
+df8 <- df7 %>% mutate(coll_method_5 = ifelse(coll_method == "unknown" & grepl("^[0-9]+", spec_locality, ignore.case = T) & !grepl(" mi | km | block | m | yds ", spec_locality, ignore.case = T), "salvage", "unknown"))
+
+## assign as salvage if locality is an highway
+
+
+
 
 
 df6 <- df51 %>% 
