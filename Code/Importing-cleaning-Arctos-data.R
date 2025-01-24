@@ -102,8 +102,12 @@ df7 <- df6 %>% mutate(coll_method = ifelse(coll_method_3 == "salvage" | coll_met
 
 ## assign as salvage if locality is an address
 df8 <- df7 %>% mutate(coll_method_5 = ifelse(coll_method == "unknown" & grepl("^[0-9]+", spec_locality, ignore.case = T) & !grepl(" mi | km | block | m | yds ", spec_locality, ignore.case = T), "salvage", "unknown"))
+df9 <- df8 %>% mutate(coll_method_6 = ifelse(coll_method == "salvage" | coll_method_5 == "salvage","salvage", "unknown"))
 
-## assign as salvage if locality is an highway
+## assign as salvage if locality is an highway or parts are just a skull
+df10 <- df9 %>% mutate(coll_method_7 = ifelse(coll_method_6 == "unknown" & parts %in% c(grep("^skull\\w*", parts, value=T)), "salvage", ifelse(coll_method_6 == "unknown" & spec_locality %in% c(grep("highway|hwy", spec_locality, ignore.case = T, value = T)),"salvage","unknown")))
+df11 <- df10 %>% mutate(coll_method_8 = ifelse(coll_method_6 == "salvage" | coll_method_7 =="salvage", "salvage", "unknown"))
+
 
 
 
