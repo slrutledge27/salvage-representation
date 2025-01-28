@@ -4,9 +4,26 @@ library(ggplot2)
 
 ### read in cleaned csv file 
 Arctos_all<-read.csv("./Data/Arctos_all.csv")
+keeps<-c("coll_method","genus_species")
+Arctos_all<-Arctos_all[keeps]
 
 ### import NACC species list
-NACC <-read.csv("./NACC_list_species.csv")
+NACC <-read.csv("./Data/NACC_list_species.csv")
+
+### select columns to keep in NACC for specimen tally (order, family, species)
+keeps<-c("order","family","species")
+species_list<-NACC[keeps]
+
+##rename column
+colnames(species_list)[3] = "genus_species"
+
+### merge to Arctos_all by genus_species
+Arctos_orders <- merge(Arctos_all, species_list, by="genus_species")
+
+## investigate unmatched entries
+
+### get specimen count per order
+columns_of_interest<-NorthAmericaBirds%>% group_by(scientificname,continent,country,locality, highergeography,decimallatitude,decimallongitude,eventdate, year,month,catalognumber,institutionid,collectionid,datasetid,ownerinstitutioncode) ### dataset with columns kept ###
 
 ##get counts for species by order in NACC
 Order_species_count <- NACC %>% 
@@ -24,17 +41,33 @@ Order_species_all <- left_join(Arctos_all, Order_species_count, by = "genus_spec
 keeps<-c("coll_method", "order","genus_species")
 Order_species_all<-Order_species_all[keeps]
 
-## split by collecting method
-df_salvage <- Order_species_all[which(Order_species_all$coll_method == "salvage"),]
-df_active <- Order_species_all[which(Order_species_all$coll_method == "active"),]
+## remove NA's
+Order_species_all<- Order_species_all %>% filter(!is.na(order))
 
-Order_species_all <- rbind(Order_species_active, Order_species_salvage)
+## now count species per order
+Order_species_count<- Order_species_all %>% 
+  filter(!is.na(genus_species)) %>%
+  group_by(order, coll_method) %>% 
+  summarize(count=n())
+
 ## write to csv
 write.csv(Order_species_all, "./species_per_order_all.csv")
 
 
 ### build a scatter plot; active vs salvage number of species per order
-p1<-ggplot(Order_species_all, aes(x=FLO, y=NSPECIMENS, colour=FLOCKING))+geom_jitter(position=position_jitter(0.2), size=3, alpha=0.4)+ geom_boxplot(lwd=1, colour="BLACK",outlier.shape = NA,alpha=0.5)+ theme(aspect.ratio = 1/1,panel.grid.major = element_blank(), panel.grid.minor = element_blank(),panel.background = element_blank(), axis.line = element_line(colour = "black",size =2))+theme(axis.text=element_text(size=10,face="bold",family="sans"),axis.title=element_text(face="bold"))+theme(legend.position="none")+scale_colour_manual(values=c("magenta","darkblue"))+xlab("Flocking")+ylab("Number of Specimens")
-flockplot2
+## pivot table
+order_species_wide <- Order_species_count %>%
+  pivot_wider(names_from = coll_method,  # Create new columns from 'Category'
+              values_from = count,    # Fill them with 'Value'
+              values_fill = 0)
 
 
+## now plot
+ggplot(data = order_species_wide, aes(x = log(salvage), y = log(active), color = order)) +
+  geom_point(size = 3) +  # Scatterplot with point size
+  coord_cartesian(ylim = c(-50, max(log(order_species_wide$active) + 2)))+
+  labs( 
+       x = "Count of salvaged species", 
+       y = "Count of actively collected species",
+       color = "Order") +  # Legend title
+  theme_minimal() 
