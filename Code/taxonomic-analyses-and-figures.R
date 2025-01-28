@@ -58,21 +58,46 @@ species_count_per_order<- species_count %>%
 write.csv(specimen_count, "./Data/specimens_per_order_all.csv")
 write.csv(species_count_per_order, "./Data/species_per_order_all.csv")
 
+### NOTE: need to remove weird first column if re-importing csv files
+specimen_count[1] <- NULL
+species_count_per_order[1] <- NULL
 
 ### build a scatter plot; active vs salvage number of species per order
 ## pivot table
-order_species_wide <- Order_species_count %>%
+order_species_wide <- species_count_per_order %>%
   pivot_wider(names_from = coll_method,  # Create new columns from 'Category'
               values_from = count,    # Fill them with 'Value'
               values_fill = 0)
 
+order_specimens_wide <- specimen_count %>%
+  pivot_wider(names_from = coll_method,  # Create new columns from 'Category'
+              values_from = count,    # Fill them with 'Value'
+              values_fill = 0)
+
+## log transform data (very skewed)
+order_species_wide$log_active <- log(order_species_wide$active+1)
+order_species_wide$log_salvage <- log(order_species_wide$salvage+1)
+
+order_specimens_wide$log_active <- log(order_specimens_wide$active+1)
+order_specimens_wide$log_salvage <- log(order_specimens_wide$salvage+1)
 
 ## now plot
-ggplot(data = order_species_wide, aes(x = log(salvage), y = log(active), color = order)) +
+ggplot(data = order_species_wide, aes(x = log_salvage, y = log_active, color = order)) +
   geom_point(size = 3) +  # Scatterplot with point size
-  coord_cartesian(ylim = c(-50, max(log(order_species_wide$active) + 2)))+
   labs( 
-       x = "Count of salvaged species", 
-       y = "Count of actively collected species",
+       x = "log-transformed count of salvaged species", 
+       y = "log-transformed count of actively collected species",
        color = "Order") +  # Legend title
   theme_minimal() 
+
+ggplot(data = order_specimens_wide, aes(x = log_salvage, y = log_active, color = order)) +
+  geom_point(size = 3) +  # Scatterplot with point size
+  labs( 
+    x = "log-transformed count of salvaged specimens", 
+    y = "log-transformed count of actively collected specimens",
+    color = "Order") +  # Legend title
+  theme_minimal() 
+
+
+
+#oord_cartesian(ylim = c(-50, max(log(order_species_wide$active) + 2)))
