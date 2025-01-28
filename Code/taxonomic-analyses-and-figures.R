@@ -21,9 +21,10 @@ colnames(species_list)[3] = "genus_species"
 Arctos_orders <- merge(Arctos_all, species_list, by="genus_species")
 
 ## investigate unmatched entries
-
+unmatched <- anti_join(Arctos_all, species_list, by="genus_species")
 ### get specimen count per order
-columns_of_interest<-NorthAmericaBirds%>% group_by(scientificname,continent,country,locality, highergeography,decimallatitude,decimallongitude,eventdate, year,month,catalognumber,institutionid,collectionid,datasetid,ownerinstitutioncode) ### dataset with columns kept ###
+specimen_count<-Arctos_orders%>% group_by(order, coll_method) %>% 
+  summarize(count=n())
 
 ##get counts for species by order in NACC
 Order_species_count <- NACC %>% 
@@ -35,23 +36,27 @@ Order_species_count <- NACC %>%
 colnames(Order_species_count)[1]<- "genus_species"
 
 ## merge NACC Order_species_count with Arctos_all by genus_species
-Order_species_all <- left_join(Arctos_all, Order_species_count, by = "genus_species")
+Arctos_order_species <- left_join(Arctos_all, Order_species_count, by = "genus_species")
 
 ## select columns to keep
 keeps<-c("coll_method", "order","genus_species")
-Order_species_all<-Order_species_all[keeps]
+Arctos_order_species<-Arctos_order_species[keeps]
 
 ## remove NA's
-Order_species_all<- Order_species_all %>% filter(!is.na(order))
+Arctos_order_species<- Arctos_order_species %>% filter(!is.na(order))
 
 ## now count species per order
-Order_species_count<- Order_species_all %>% 
+species_count<- Arctos_order_species %>% 
   filter(!is.na(genus_species)) %>%
-  group_by(order, coll_method) %>% 
+  group_by(order, genus_species,coll_method) %>% 
   summarize(count=n())
 
+species_count_per_order<- species_count %>% 
+  group_by(order,coll_method) %>% 
+  summarize(count=n())
 ## write to csv
-write.csv(Order_species_all, "./species_per_order_all.csv")
+write.csv(specimen_count, "./Data/specimens_per_order_all.csv")
+write.csv(species_count_per_order, "./Data/species_per_order_all.csv")
 
 
 ### build a scatter plot; active vs salvage number of species per order
