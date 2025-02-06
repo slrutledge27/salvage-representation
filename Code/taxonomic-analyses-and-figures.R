@@ -59,8 +59,8 @@ write.csv(specimen_count, "./Data/specimens_per_order_all.csv")
 write.csv(species_count_per_order, "./Data/species_per_order_all.csv")
 
 ### NOTE: need to remove weird first column if re-importing csv files
-specimen_count[1] <- NULL
-species_count_per_order[1] <- NULL
+#specimen_count[1] <- NULL
+#species_count_per_order[1] <- NULL
 
 ### build a scatter plot; active vs salvage number of species per order
 ## pivot table
@@ -81,9 +81,33 @@ order_species_wide$log_salvage <- log(order_species_wide$salvage+1)
 order_specimens_wide$log_active <- log(order_specimens_wide$active+1)
 order_specimens_wide$log_salvage <- log(order_specimens_wide$salvage+1)
 
+## test for correlations
+cor.test(order_species_wide$log_active,order_species_wide$log_salvage)#Correlation is negative and significant. There is an inverse correlation between salvage and active specmien counts.
+## report effect size, p-value, se
+cor.test(order_specimens_wide$log_active,order_specimens_wide$log_salvage)#Correlation is negative and significant. There is an inverse correlation between salvage and active specmien counts.
+
+
+## set up equations
+# Fit linear model
+model <- lm(log_active ~ log_salvage, data = order_species_wide)
+coeff <- coef(model)  # Extract slope and intercept
+r_squared <- summary(model)$r.squared  # R² value
+
+# Create equation text
+eq_text <- paste0("y = ", round(coeff[2], 2), "x + ", round(coeff[1], 2), 
+                  "\nR² = ", round(r_squared, 3))
 ## now plot
 ggplot(data = order_species_wide, aes(x = log_salvage, y = log_active, color = order)) +
-  geom_point(size = 3) +  # Scatterplot with point size
+    # Scatterplot with point size
+  geom_point() +
+  geom_smooth(method = "lm", color = "red", se = FALSE)+
+  # Show dots
+  #geom_text(
+    #label=order_species_wide$order, 
+    #nudge_x = 0.1, nudge_y = 0.1, 
+    #check_overlap = T, size = 2
+ # )+
+  annotate("text", x = min(order_species_wide$log_salvage), y = max(order_species_wide$log_active), label = eq_text, hjust = 0, size = 5, color = "darkred")+
   labs( 
        x = "log-transformed count of salvaged species", 
        y = "log-transformed count of actively collected species",
@@ -91,7 +115,13 @@ ggplot(data = order_species_wide, aes(x = log_salvage, y = log_active, color = o
   theme_minimal() 
 
 ggplot(data = order_specimens_wide, aes(x = log_salvage, y = log_active, color = order)) +
-  geom_point(size = 3) +  # Scatterplot with point size
+  geom_point() +  # Scatterplot with point size
+  geom_smooth(method = "lm", color = "red", se = FALSE)+
+  #geom_text(
+   # label=order_specimens_wide$order, 
+    #nudge_x = 0.1, nudge_y = 0.1, 
+    #check_overlap = T, size = 2
+  #)+
   labs( 
     x = "log-transformed count of salvaged specimens", 
     y = "log-transformed count of actively collected specimens",
