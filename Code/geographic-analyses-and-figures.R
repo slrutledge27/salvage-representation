@@ -3,7 +3,7 @@ library(terra) #for managing rasters
 library(gridExtra)
 
 ### Read in GeoTiff of population density data ###
-pop_density<-rast("./shapefiles/gpw_v4_population_density_rev11_2020_15_min.tif")
+pop_density<-rast("./Shapefiles/gpw_v4_population_density_rev11_2020_15_min.tif")
 pop_density_utm<-terra:::project(pop_density,"+proj=utm +zone=10")
 
 ### Read in raw occurence data for active and salvage specimens ###
@@ -67,26 +67,27 @@ populated_cell_index<-which(!(active_counts==0 & salvage_counts==0))
 plot_data<-st_as_sf(CA_grid[CA_UTM],active_plot=log(active_counts+1),salvage_plot=log(salvage_counts+1),pop_den_plot=log(centroid_popdensity_values[,2]+1))
 
 ### Draft figure 2 column width, 6 panels. 2 rows x 3 columns. Top row is rasters and grid values, bottom row is scatterplots correlation tests ###
-## Panel A: Actively Collected Specimens ###
+### Panel A: Actively Collected Specimens ###
 par(mar = c(0, 0, 0, 0))
 plot(plot_data["active_plot"],ann=FALSE)
 
-## Panel B: Salvaged Specimens ###
+### Panel B: Salvaged Specimens ###
 par(mar = c(0, 0, 0, 0))
 plot(plot_data["salvage_plot"])
 
-## Panel C: Population Density ###
+### Panel C: Population Density ###
 par(mar = c(0, 0, 0, 0))
 plot(plot_data["pop_den_plot"])
 
-## Panel D: Active vs Salvage ###
+### Panel D: Active vs Salvage ###
 par(mar = c(3, 3, 1, 1))
 plot(log(active_counts[populated_cell_index]+1),log(salvage_counts[populated_cell_index]+1),cex.axis = 1.00, ann = FALSE)
 
 cor.test(log(active_counts+1),log(salvage_counts+1))#Correlation is negative and significant. There is an inverse correlation between salvage and active specmien counts.
 abline(lm(log(salvage_counts+1)~log(active_counts+1)))
 
-## Panel E: Active vs Pop Density ###
+
+### Panel E: Active vs Pop Density ###
 par(mar = c(3, 3, 1, 1))
 plot(log(centroid_popdensity_values[populated_cell_index,2]+1),log(active_counts[populated_cell_index]+1), cex.axis = 1.00, ann = FALSE)
 
@@ -102,27 +103,25 @@ abline(lm(log(salvage_counts[populated_cell_index]+1)~log(centroid_popdensity_va
 cor.test(log(centroid_popdensity_values[populated_cell_index,2]+1),log(salvage_counts[populated_cell_index]+1))
 
 
-### exported plots to pngs; loaded gridExtra and png packages THIS WORKS!!!!!!!!!
-library(png)
-library(gridExtra)
-library(grid)
+### export plots to pdfs; read in pdfs to form 6-panel figure - THIS WORKS BETTER THAN EXPORTING AS PNGs!!!
+library(pdftools)
+library(magick)
 
-p1 <- readPNG("./figures/p1-margins-cut.png")
-p2 <- readPNG("./figures/p2-margins-cut.png")
-p3 <- readPNG("./figures/p3-margins-cut.png")
-p4 <- readPNG("./figures/p4-margins-cut.png")
-p5 <- readPNG("./figures/p5-margins-cut.png")
-p6 <- readPNG("./figures/p6-margins-cut.png")
+## need to convert pdfs into images
+pdf_files <- c("./Figures/p1.pdf", "./Figures/p2.pdf", "./Figures/p3.pdf", "./Figures/p4.pdf", "./Figures/p5.pdf", "./Figures/p6.pdf")
 
-par(mar = c(0, 0, 0, 0))
-grid.arrange(
-  rasterGrob(p1), 
-  rasterGrob(p2), 
-  rasterGrob(p3), 
-  rasterGrob(p4),
-  rasterGrob(p5),
-  rasterGrob(p6),
-  nrow = 2, ncol = 3,
-  widths = c(1, 1, 1),
-  heights = c(1, 1))
+# Convert each PDF to an image
+images <- lapply(pdf_files, function(pdf) {
+  image_read(pdf_render_page(pdf, page = 1, dpi = 300))
+})
+
+final_image <- image_append(c(
+  image_append(c(images[[1]], images[[2]], images[[3]]), stack = FALSE),
+  image_append(c(images[[4]], images[[5]], images[[6]]), stack = FALSE)
+), stack = TRUE)
+
+print(final_image)
+
+# Save output
+image_write(final_image, "Salvage-figure.png")
 
