@@ -58,10 +58,42 @@ w <- w %>% mutate(coll_method_7 = ifelse(coll_method_5 == "salvage" | coll_metho
 w <- w %>% mutate(coll_method_8 = ifelse(w$parts=="tissue" | w$parts == "tissue; tissue sample" | w$parts == "wing; tissue", "salvage", "unknown"))
 w <- w %>% mutate(coll_method = ifelse(coll_method_7 == "salvage" | coll_method_8 =="salvage", "salvage", "unknown"))
 
-
+### go through remaining localities
+## assign as active if three or more entries with same localities have same collecting dates, or continous collecting dates (unless clearly a salvage location, e.g. Outside health center); or multiple records for single day across several localities
 unknown_localities<- w[which(w$coll_method == "unknown"),] %>% group_by(verbatim_date, spec_locality) %>% 
   summarize(count=n())
-### if no known locality, remove from dataset
+
+## same locality, same collection date
+# Carmel Valley Rd. at mile marker 26, Los Banos, Upper Shake Campground, 3 mi S and 4 mi E Three Points, Moss Landing State Beach,
+# Zmudowski State Beach, north of Moss Landing, Obsidian Dome, 1 mi S and 3 mi E town of June Lake, Bonny Doon, 1 mi W Hi Mountain Campground, 3 mi S and 3 mi W Pozo
+# junction of Rd. 500 and Rd. 520, Jackson Demonstration State Forest, Paul L. Wattis Sanctuary, ca. 8.5 mi NNE town of Colusa, Garcia Mountain, 2 mi S and 2 mi W Pozo,
+# Rd. 500, Jackson Demonstration State Forest, Balch Park Rd., Sequoia National Forest, USFS Rd. 19S10 (Rancheria Fire Rd.) off Balch Park Rd., Sequoia National Forest,
+# entrance to Elkhorn Slough, Moss Landing, Chalfant Valley, ca. 1 mi S Chalfant, Deadman Creek, 4 mi S and 3.5 mi E town of June Lake
+# Little River State Beach, south of Moonstone; Moss Landing State Beach; Mark Stromberg's picnic table, Hastings Natural History Reservation, Carmel Valley
+# 4.5 mi W Shinn Peaks; 2 mi N and 0.5 mi W Markleeville; 1 mi E Benton; south end of Point Reyes Beach, Point Reyes; Chalfant Valley, ca. 1 mi S Chalfant
+# Los Banos; Upper Shake Campground, 3 mi S and 4 mi E Three Points; Martin Rd., Hastings Natural History Reservation; 1 mi E Benton;
+# 1 mi E Benton; Valley View Drive, Stanislaus National Forest; S of Dinkey Creek Rd., 1 mi S and 3 mi E town of Shaver Lake; S of Dinkey Creek Rd., 1.5 mi S and 6 mi E town of Shaver Lake
+# N of Dinkey Creek Rd., 2 mi S and 8 mi E town of Shaver Lake; University of California Sierra Foothill Range Field Station, 4.5 mi N Smartville;
+# Eable Lake; 10 mi S Davis Creek; Goose Lake at southern causeway; University of California Sierra Foothill Range Field Station, 4.5 mi N Smartville
+# Finch Creek, near entrance to Hastings Natural History Reservation; 0.5 mi W Hi Mountain Campground, 3 mi S and 2.5 mi W Pozo
+
+
+## same date, different localities (3 or more of same date)
+# entrance to Elkhorn Slough, Moss Landing, Elkhorn Slough, Moss Landing, barn, Blue Oak Ranch Reserve, Clam Beach County Park, Clam Beach,
+# near Clam Beach; Elkhorn Slough, Moss Landing; 
+# 24-Jan-07: Aptos: Fern Flat Rd.; Big Lake, Blue Oak Ranch Reserve; Corralitos: Hames Road; Hastings Entry Lane at Big Creek crossing, Hastings Natural History Reservation;
+# 24-Jan-07: School House, Hastings Natural History Reservation; 
+# 26-Nov-05: Carmel Valley Rd. at mile marker 19.5; Carmel Valley Rd. at mile marker 21; Santa Cruz: Stephen st. & Emeline ave.
+# 26-Nov-12: Matilija Creek drainage, mouth of Murietta Canyon; Santa Cruz: FAC House; Santa Cruz:307 Laguna St.
+# 30-Nov-07: Empire Grade: Creek Bed; Moss Landing State Beach; UCSC Arboretum; Zmudowski State Beach
+# 31-May-06: Oakhurst: Episcopal Conference Center; Prather: Morgan Canyon: 30705 Pennyroyal Lane; Santa Cruz: 115 Effey St.; Windmill Meadow (50 m S of windmill), Blue Oak Ranch Reserve
+# 5-May-06: Fresno Wastewater Treatment Plant; Fresno Wastewater Treatment Plant: Jensen & Cornelia Aves.; Fresno wastewater treatment plant, Jensen & Cornelia aves.
+# 7/25/2005 & 7/24/2005 & 7/23/2005: Eable Lake, Eagle Lake
+
+## assign all others as salvage
+
+
+### if no known locality (or "no specific locality" or "Unknown" or "No data"), remove from dataset
 
 ### assign all other entries as actively-collected
 
