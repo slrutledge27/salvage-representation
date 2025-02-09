@@ -59,26 +59,33 @@ w <- w %>% mutate(coll_method_8 = ifelse(w$parts=="tissue" | w$parts == "tissue;
 w <- w %>% mutate(coll_method = ifelse(coll_method_7 == "salvage" | coll_method_8 =="salvage", "salvage", "unknown"))
 
 ### go through remaining localities
+unknown_localities<- w[which(w$coll_method == "unknown"),] %>% group_by(verbatim_date, spec_locality) %>% 
+  summarize(count=n())
+
 ## assign as active if three or more entries with same localities have same collecting dates, or continous collecting dates (unless clearly a salvage location, e.g. Outside health center); or multiple records for single day across several localities
 unknown_localities<- w[which(w$coll_method == "unknown"),] %>% group_by(verbatim_date, spec_locality) %>% 
   summarize(count=n())
 
 ## same locality, same collection date
-# Carmel Valley Rd. at mile marker 26, Los Banos, Upper Shake Campground, 3 mi S and 4 mi E Three Points, Moss Landing State Beach,
-# Zmudowski State Beach, north of Moss Landing, Obsidian Dome, 1 mi S and 3 mi E town of June Lake, Bonny Doon, 1 mi W Hi Mountain Campground, 3 mi S and 3 mi W Pozo
-# junction of Rd. 500 and Rd. 520, Jackson Demonstration State Forest, Paul L. Wattis Sanctuary, ca. 8.5 mi NNE town of Colusa, Garcia Mountain, 2 mi S and 2 mi W Pozo,
-# Rd. 500, Jackson Demonstration State Forest, Balch Park Rd., Sequoia National Forest, USFS Rd. 19S10 (Rancheria Fire Rd.) off Balch Park Rd., Sequoia National Forest,
-# entrance to Elkhorn Slough, Moss Landing, Chalfant Valley, ca. 1 mi S Chalfant, Deadman Creek, 4 mi S and 3.5 mi E town of June Lake
-# Little River State Beach, south of Moonstone; Moss Landing State Beach; Mark Stromberg's picnic table, Hastings Natural History Reservation, Carmel Valley
-# 4.5 mi W Shinn Peaks; 2 mi N and 0.5 mi W Markleeville; 1 mi E Benton; south end of Point Reyes Beach, Point Reyes; Chalfant Valley, ca. 1 mi S Chalfant
-# Los Banos; Upper Shake Campground, 3 mi S and 4 mi E Three Points; Martin Rd., Hastings Natural History Reservation; 1 mi E Benton;
-# 1 mi E Benton; Valley View Drive, Stanislaus National Forest; S of Dinkey Creek Rd., 1 mi S and 3 mi E town of Shaver Lake; S of Dinkey Creek Rd., 1.5 mi S and 6 mi E town of Shaver Lake
-# N of Dinkey Creek Rd., 2 mi S and 8 mi E town of Shaver Lake; University of California Sierra Foothill Range Field Station, 4.5 mi N Smartville;
-# Eable Lake; 10 mi S Davis Creek; Goose Lake at southern causeway; University of California Sierra Foothill Range Field Station, 4.5 mi N Smartville
-# Finch Creek, near entrance to Hastings Natural History Reservation; 0.5 mi W Hi Mountain Campground, 3 mi S and 2.5 mi W Pozo
+w <- w %>% mutate(coll_method_9 = ifelse(coll_method == "unknown" & spec_locality =="Carmel Valley Rd. at mile marker 26" | spec_locality=="Los Banos" | spec_locality=="Upper Shake Campground"
+                                         | spec_locality=="3 mi S and 4 mi E Three Points" | spec_locality=="Moss Landing State Beach" | spec_locality=="Zmudowski State Beach" | spec_locality=="north of Moss Landing" | spec_locality==" Obsidian Dome"
+                                         | spec_locality== "1 mi S and 3 mi E town of June Lake" | spec_locality=="1 mi W Hi Mountain Campground" | spec_locality=="3 mi S and 3 mi W Pozo"
+                                         | spec_locality=="junction of Rd. 500 and Rd. 520" | spec_locality=="Jackson Demonstration State Forest" | spec_locality=="Paul L. Wattis Sanctuary"
+                                         | spec_locality== "ca. 8.5 mi NNE town of Colusa" | spec_locality=="Garcia Mountain" | spec_locality == "2 mi S and 2 mi W Pozo" | spec_locality=="Rd. 500, Jackson Demonstration State Forest"
+                                         | spec_locality=="Balch Park Rd." | spec_locality=="Sequoia National Forest" | spec_locality == "USFS Rd. 19S10 (Rancheria Fire Rd.) off Balch Park Rd."
+                                         | spec_locality=="entrance to Elkhorn Slough" | spec_locality=="Moss Landing" | spec_locality=="Chalfant Valley" | spec_locality=="ca. 1 mi S Chalfant"
+                                         | spec_locality=="Deadman Creek" | spec_locality=="4 mi S and 3.5 mi E town of June Lake" | spec_locality=="Little River State Beach, south of Moonstone"
+                                         | spec_locality=="Moss Landing State Beach" | spec_locality=="Mark Stromberg's picnic table, Hastings Natural History Reservation, Carmel Valley"
+                                         | spec_locality=="4.5 mi W Shinn Peaks" | spec_locality=="2 mi N and 0.5 mi W Markleeville" | spec_locality=="1 mi E Benton" | spec_locality=="south end of Point Reyes Beach, Point Reyes"
+                                         | spec_locality=="Chalfant Valley, ca. 1 mi S Chalfant" | spec_locality=="Upper Shake Campground, 3 mi S and 4 mi E Three Points"| spec_locality=="Martin Rd., Hastings Natural History Reservation"
+                                         | spec_locality=="1 mi E Benton" | spec_locality=="Valley View Drive, Stanislaus National Forest" | spec_locality== "S of Dinkey Creek Rd., 1 mi S and 3 mi E town of Shaver Lake"
+                                         | spec_locality=="N of Dinkey Creek Rd., 2 mi S and 8 mi E town of Shaver Lake" | spec_locality=="University of California Sierra Foothill Range Field Station, 4.5 mi N Smartville"
+                                         | spec_locality=="Eable Lake" | spec_locality=="10 mi S Davis Creek" | spec_locality=="Goose Lake at southern causeway" | spec_locality=="Finch Creek, near entrance to Hastings Natural History Reservation"
+                                         | spec_locality=="0.5 mi W Hi Mountain Campground, 3 mi S and 2.5 mi W Pozo"
+                                         , "active", "salvage"))
 
 
-## same date, different localities (3 or more of same date)
+## same date, different localities (3 or more of same date) ### QUESTION TO NICK: DO THESE MAKE SENSE BEFORE I ASSIGN AS ACTIVELY-COLLECTED???
 # entrance to Elkhorn Slough, Moss Landing, Elkhorn Slough, Moss Landing, barn, Blue Oak Ranch Reserve, Clam Beach County Park, Clam Beach,
 # near Clam Beach; Elkhorn Slough, Moss Landing; 
 # 24-Jan-07: Aptos: Fern Flat Rd.; Big Lake, Blue Oak Ranch Reserve; Corralitos: Hames Road; Hastings Entry Lane at Big Creek crossing, Hastings Natural History Reservation;
@@ -90,18 +97,16 @@ unknown_localities<- w[which(w$coll_method == "unknown"),] %>% group_by(verbatim
 # 5-May-06: Fresno Wastewater Treatment Plant; Fresno Wastewater Treatment Plant: Jensen & Cornelia Aves.; Fresno wastewater treatment plant, Jensen & Cornelia aves.
 # 7/25/2005 & 7/24/2005 & 7/23/2005: Eable Lake, Eagle Lake
 
-## assign all others as salvage
+w <- w %>% mutate(coll_method_ = ifelse(coll_method == "salvage" | coll_method_9 =="salvage", "salvage", "active"))
 
 
-### if no known locality (or "no specific locality" or "Unknown" or "No data"), remove from dataset
-
-### assign all other entries as actively-collected
-
-
+unknown_coll_method <- w[c('scientific_name', 'dec_lat', 'dec_long','coll_method_')]
+unknown_coll_method <- unknown_coll_method %>% 
+  rename(
+    coll_method = coll_method_)
 ##### bind unknown and known datasets
-Arctos_all <- rbind(Arctos_active, Arctos_salvage)
+Arctos_all <- rbind(unknown_coll_method, known_coll_method)
 
-##### split datasets into actively-collected and salvaged specimens dataset
-df_salvage <- df7[which(df7$coll_method == "salvage"),]
-df_active <- df7[which(df7$coll_method == "active"),]
+### if no dec_lat & dec_long, remove from dataset
+Arctos_all<-Arctos_all[!is.na(Arctos_all$dec_lat),]
 
