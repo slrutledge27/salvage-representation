@@ -21,7 +21,7 @@ colnames(species_list)[3] = "genus_species"
 Arctos_orders <- merge(Arctos_all, species_list, by="genus_species")
 
 ## investigate unmatched entries
-unmatched <- anti_join(Arctos_all, species_list, by="genus_species")
+# unmatched <- anti_join(Arctos_all, species_list, by="genus_species")
 ### get specimen count per order
 specimen_count<-Arctos_orders%>% group_by(order, coll_method) %>% 
   summarize(count=n())
@@ -65,13 +65,13 @@ write.csv(species_count_per_order, "./Data/species_per_order_all.csv")
 ### build a scatter plot; active vs salvage number of species per order
 ## pivot table
 order_species_wide <- species_count_per_order %>%
-  pivot_wider(names_from = coll_method,  # Create new columns from 'Category'
-              values_from = count,    # Fill them with 'Value'
+  pivot_wider(names_from = coll_method, 
+              values_from = count,    
               values_fill = 0)
 
 order_specimens_wide <- specimen_count %>%
-  pivot_wider(names_from = coll_method,  # Create new columns from 'Category'
-              values_from = count,    # Fill them with 'Value'
+  pivot_wider(names_from = coll_method,  
+              values_from = count,    
               values_fill = 0)
 
 ## log transform data (very skewed)
@@ -86,16 +86,6 @@ cor.test(order_species_wide$log_active,order_species_wide$log_salvage)#Correlati
 ## report effect size, p-value, se
 cor.test(order_specimens_wide$log_active,order_specimens_wide$log_salvage)#Correlation is negative and significant. There is an inverse correlation between salvage and active specmien counts.
 
-
-## set up equations
-# Fit linear model
-model <- lm(log_active ~ log_salvage, data = order_species_wide)
-coeff <- coef(model)  # Extract slope and intercept
-r_squared <- summary(model)$r.squared  # R² value
-
-# Create equation text
-eq_text <- paste0("y = ", round(coeff[2], 2), "x + ", round(coeff[1], 2), 
-                  "\nR² = ", round(r_squared, 3))
 ## now plot
 ggplot(data = order_species_wide, aes(x = log_salvage, y = log_active, color = order)) +
     # Scatterplot with point size
@@ -128,6 +118,3 @@ ggplot(data = order_specimens_wide, aes(x = log_salvage, y = log_active, color =
     color = "Order") +  # Legend title
   theme_minimal() 
 
-
-
-#oord_cartesian(ylim = c(-50, max(log(order_species_wide$active) + 2)))
