@@ -2,8 +2,6 @@ library(tidyverse)
 library(dplyr)
 library(ggplot2)
 
-
-
 ## log transform data (very skewed)
 count_proportional_byorder$log_active_species_prop <- log(count_proportional_byorder$species_count_active_proportional+1)
 count_proportional_byorder$log_salvage_species_prop <- log(count_proportional_byorder$species_count_salvage_proportional+1)
