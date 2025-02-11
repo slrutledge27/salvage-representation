@@ -2,24 +2,7 @@ library(tidyverse)
 library(dplyr)
 library(ggplot2)
 
-### Single data frame for plotting and stats ###
-#count_proportional_byorder
-#write.csv(count_proportional_byorder, "./Data/proportion_dataset_for_analyses_and_plotting.csv")
 
-count_proportional_byorder <-read.csv("./Data/proportion_dataset_for_analyses_and_plotting.csv")
-
-### Scatterplots ###
-plot(log(count_proportional_byorder$species_count_salvage_proportional+1),log(count_proportional_byorder$species_count_active_proportional+1))
-cor.test(log(count_proportional_byorder$species_count_salvage_proportional+1),log(count_proportional_byorder$species_count_active_proportional+1))
-
-plot(log(count_proportional_byorder$specimen_count_salvage_proportional+1),log(count_proportional_byorder$specimen_count_active_proportional+1))
-cor.test(log(count_proportional_byorder$specimen_count_salvage_proportional+1),log(count_proportional_byorder$specimen_count_active_proportional+1))
-
-### NOTE: need to remove weird first column if re-importing csv files
-#specimen_count[1] <- NULL
-#species_count_per_order[1] <- NULL
-
-### build a scatter plot; active vs salvage number of species per order
 
 ## log transform data (very skewed)
 count_proportional_byorder$log_active_species_prop <- log(count_proportional_byorder$species_count_active_proportional+1)
@@ -30,12 +13,11 @@ count_proportional_byorder$log_salvage_specimen_prop <- log(count_proportional_b
 
 write.csv(count_proportional_byorder, "./Data/proportion_dataset_for_analyses_and_plotting.csv")
 
-## count_proportional_byorder <- proportion_dataset_for_analyses_and_plotting
+#count_proportional_byorder <-read.csv("./Data/proportion_dataset_for_analyses_and_plotting.csv")
 
-## test for correlations
-cor.test(order_species_wide$log_active,order_species_wide$log_salvage)
-## report effect size, p-value, se
-cor.test(order_specimens_wide$log_active,order_specimens_wide$log_salvage)
+### Correlation tests ###
+cor.test(count_proportional_byorder$log_salvage_species_prop,count_proportional_byorder$log_active_species_prop)
+cor.test(count_proportional_byorder$log_salvage_specimen_prop,count_proportional_byorder$log_active_specimen_prop)
 
 ## make rownames into separate column
 count_proportional_byorder <- tibble::rownames_to_column(count_proportional_byorder, "order") 
