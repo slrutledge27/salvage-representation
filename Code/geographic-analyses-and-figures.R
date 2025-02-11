@@ -1,18 +1,15 @@
 library(sf) #for managing vectors
 library(terra) #for managing rasters
-library(gridExtra)
 
 ### Read in GeoTiff of population density data ###
 pop_density<-rast("./Shapefiles/gpw_v4_population_density_rev11_2020_15_min.tif")
 pop_density_utm<-terra:::project(pop_density,"+proj=utm +zone=10")
 
 ### Read in raw occurence data for active and salvage specimens ###
-active<-read.csv("./Data/Arctos_active.csv")
-salvage<-read.csv("./Data/Arctos_salvage.csv")
+all_data<-read.csv("./Data/Arctos_all.csv")
+salvage<-all_data[all_data$coll_method=="salvage",]
+active<-all_data[all_data$coll_method=="active",]
 
-### Remove NA values from each data set ###
-active<-active[!is.na(active$dec_lat),]
-salvage<-salvage[!is.na(salvage$dec_lat),]
 
 ### Change data format for each set of coordinates so they can be analyzed by the grid below ###
 active_sf <- st_as_sf(active, coords = c("dec_long", "dec_lat"), crs = 4326)  
@@ -46,11 +43,7 @@ CA_grid_mask<-CA_grid[CA_UTM]
 plot(CA_grid_mask)
 
 ### Get population density data for the same grid ###
-centroid_utmgrid<-vect(as(st_centroid(CA_grid_mask),"Spatial"))
-centroid_popdensity_values<-terra::extract(pop_density_utm,centroid_utmgrid)
-
-### Because the rasters are slightly off, we'll replace the NA values (which are all near the coast) with 0 for plotting purposes ###
-centroid_popdensity_values[,2][is.na(centroid_popdensity_values[,2])]<-0
+popdensity_values<-exact_extract(pop_density_utm,CA_grid_mask,'mean')
 
 ### Count the number of points within each cell for both data sets ###
 active_intersect<-st_intersects(CA_grid_mask,active_sf_UTM)
@@ -123,5 +116,5 @@ final_image <- image_append(c(
 print(final_image)
 
 # Save output
-image_write(final_image, "Salvage-figure.png")
+image_write(final_image, "./Figures/Salvage-figure.png")
 

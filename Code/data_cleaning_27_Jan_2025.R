@@ -109,5 +109,5 @@ Arctos_all <- rbind(unknown_coll_method, known_coll_method)
 
 ### if no dec_lat & dec_long, remove from dataset
 Arctos_all<-Arctos_all[!is.na(Arctos_all$dec_lat),]
-write.csv(Arctos_all, "./Data/Arctos_all_8_Feb_2025.csv")
+write.csv(Arctos_all, "./Data/Arctos_all.csv")
 
