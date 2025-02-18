@@ -1,5 +1,6 @@
 library(sf) #for managing vectors
 library(terra) #for managing rasters
+library(exactextractr)
 
 ### Read in GeoTiff of population density data ###
 pop_density<-rast("./Shapefiles/gpw_v4_population_density_rev11_2020_15_min.tif")
@@ -57,7 +58,7 @@ salvage_counts<-lengths(salvage_intersect)
 populated_cell_index<-which(!(active_counts==0 & salvage_counts==0))
 
 ### Create spatial feature object that combines the grid polygon with our active, salvage, and popdensity data log transformed for plotting ###
-plot_data<-st_as_sf(CA_grid[CA_UTM],active_plot=log(active_counts+1),salvage_plot=log(salvage_counts+1),pop_den_plot=log(centroid_popdensity_values[,2]+1))
+plot_data<-st_as_sf(CA_grid[CA_UTM],active_plot=log(active_counts+1),salvage_plot=log(salvage_counts+1),pop_den_plot=log(popdensity_values))
 
 ### Draft figure 2 column width, 6 panels. 2 rows x 3 columns. Top row is rasters and grid values, bottom row is scatterplots correlation tests ###
 ### Panel A: Actively Collected Specimens ###
@@ -82,18 +83,18 @@ abline(lm(log(salvage_counts+1)~log(active_counts+1)))
 
 ### Panel E: Active vs Pop Density ###
 par(mar = c(3, 3, 1, 1))
-plot(log(centroid_popdensity_values[populated_cell_index,2]+1),log(active_counts[populated_cell_index]+1), cex.axis = 1.00, ann = FALSE)
+plot(log(popdensity_values[populated_cell_index]+1),log(active_counts[populated_cell_index]+1), cex.axis = 1.00, ann = FALSE)
 
-abline(lm(log(active_counts[populated_cell_index]+1)~log(centroid_popdensity_values[populated_cell_index,2]+1)))
-cor.test(log(centroid_popdensity_values[populated_cell_index,2]+1),log(active_counts[populated_cell_index]+1))
+abline(lm(log(active_counts[populated_cell_index]+1)~log(popdensity_values[populated_cell_index]+1)))
+cor.test(log(popdensity_values[populated_cell_index]+1),log(active_counts[populated_cell_index]+1))
 
 
 ### Panel F: Salvage vs Pop Density ###
 par(mar = c(3, 3, 1, 1))
-plot(log(centroid_popdensity_values[populated_cell_index,2]+1),log(salvage_counts[populated_cell_index]+1),  cex.axis = 1.00, ann = FALSE)
+plot(log(popdensity_values[populated_cell_index]+1),log(salvage_counts[populated_cell_index]+1),  cex.axis = 1.00, ann = FALSE)
 
-abline(lm(log(salvage_counts[populated_cell_index]+1)~log(centroid_popdensity_values[populated_cell_index,2]+1)))
-cor.test(log(centroid_popdensity_values[populated_cell_index,2]+1),log(salvage_counts[populated_cell_index]+1))
+abline(lm(log(salvage_counts[populated_cell_index]+1)~log(popdensity_values[populated_cell_index]+1)))
+cor.test(log(popdensity_values[populated_cell_index]+1),log(salvage_counts[populated_cell_index]+1))
 
 
 ### export plots to pdfs; read in pdfs to form 6-panel figure - THIS WORKS BETTER THAN EXPORTING AS PNGs!!!
