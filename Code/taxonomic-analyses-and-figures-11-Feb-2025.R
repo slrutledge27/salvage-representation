@@ -11,7 +11,7 @@ count_proportional_byorder$log_salvage_specimen_prop <- log(count_proportional_b
 
 write.csv(count_proportional_byorder, "./Data/proportion_dataset_for_analyses_and_plotting.csv")
 
-#count_proportional_byorder <-read.csv("./Data/proportion_dataset_for_analyses_and_plotting.csv")
+count_proportional_byorder <-read.csv("./Data/proportion_dataset_for_analyses_and_plotting.csv")
 
 ### Correlation tests ###
 cor.test(count_proportional_byorder$log_salvage_species_prop,count_proportional_byorder$log_active_species_prop)

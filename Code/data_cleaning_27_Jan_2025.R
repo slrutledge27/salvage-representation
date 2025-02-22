@@ -20,6 +20,7 @@ Arctos_all$coll_method_2 <- ifelse(Arctos_all$collecting_method == "" | Arctos_a
 Arctos_known <- Arctos_all[which(Arctos_all$coll_method_2 == "known"),]
 Arctos_unknown <- Arctos_all[which(Arctos_all$coll_method_2 == "unknown"),]
 
+
 ##### for known dataset, assign based on recorded method as active and salvage
 z <- Arctos_known
 z <- z %>% 
@@ -59,45 +60,30 @@ w <- w %>% mutate(coll_method_8 = ifelse(w$parts=="tissue" | w$parts == "tissue;
 w <- w %>% mutate(coll_method = ifelse(coll_method_7 == "salvage" | coll_method_8 =="salvage", "salvage", "unknown"))
 
 ### go through remaining localities
-unknown_localities<- w[which(w$coll_method == "unknown"),] %>% group_by(verbatim_date, spec_locality) %>% 
+unknown_localities<- w[which(w$coll_method == "unknown"),] %>% group_by(guid, accn_number,verbatim_date, spec_locality) %>% 
+  summarize(count=n())
+### write to csv to send to Carla and Raurie
+#write.csv(unknown_localities, "./Data/Arctos_unknown_localities.csv")
+## upon obtaining response from Carla...
+# import csv with new collecting method column
+Arctos_unknown_methods_added <- read.csv("./Data/Arctos_unknown_localities_method_added.csv")
+m <- Arctos_unknown_methods_added
+##keep only necessary columns in w for merging
+k <- w[c('guid','accn_number','spec_locality','verbatim_date','scientific_name', 'dec_lat', 'dec_long','coll_method')]
+
+## merge 
+b <-merge(k, m, by=c('guid', 'accn_number', 'spec_locality'), all=TRUE)
+c <-merge(m, k, by=c('guid', 'accn_number', 'spec_locality'), all=TRUE)
+
+# getting 1671 obs. when it should be 1664...figure out duplicate entries
+guids<- b%>% group_by(guid) %>% 
   summarize(count=n())
 
-## assign as active if three or more entries with same localities have same collecting dates, or continous collecting dates (unless clearly a salvage location, e.g. Outside health center); or multiple records for single day across several localities
-unknown_localities<- w[which(w$coll_method == "unknown"),] %>% group_by(verbatim_date, spec_locality) %>% 
-  summarize(count=n())
+## 2 each of: MVZ:Bird:180675, MVZ:Bird:181745, MVZ:Bird:181769, MVZ:Bird:181770, MVZ:Bird:181771, MVZ:Bird:183090, MVZ:Bird:183163
 
-## same locality, same collection date
-w <- w %>% mutate(coll_method_9 = ifelse(coll_method == "unknown" & spec_locality =="Carmel Valley Rd. at mile marker 26" | spec_locality=="Los Banos" | spec_locality=="Upper Shake Campground"
-                                         | spec_locality=="3 mi S and 4 mi E Three Points" | spec_locality=="Moss Landing State Beach" | spec_locality=="Zmudowski State Beach" | spec_locality=="north of Moss Landing" | spec_locality==" Obsidian Dome"
-                                         | spec_locality== "1 mi S and 3 mi E town of June Lake" | spec_locality=="1 mi W Hi Mountain Campground" | spec_locality=="3 mi S and 3 mi W Pozo"
-                                         | spec_locality=="junction of Rd. 500 and Rd. 520" | spec_locality=="Jackson Demonstration State Forest" | spec_locality=="Paul L. Wattis Sanctuary"
-                                         | spec_locality== "ca. 8.5 mi NNE town of Colusa" | spec_locality=="Garcia Mountain" | spec_locality == "2 mi S and 2 mi W Pozo" | spec_locality=="Rd. 500, Jackson Demonstration State Forest"
-                                         | spec_locality=="Balch Park Rd." | spec_locality=="Sequoia National Forest" | spec_locality == "USFS Rd. 19S10 (Rancheria Fire Rd.) off Balch Park Rd."
-                                         | spec_locality=="entrance to Elkhorn Slough" | spec_locality=="Moss Landing" | spec_locality=="Chalfant Valley" | spec_locality=="ca. 1 mi S Chalfant"
-                                         | spec_locality=="Deadman Creek" | spec_locality=="4 mi S and 3.5 mi E town of June Lake" | spec_locality=="Little River State Beach, south of Moonstone"
-                                         | spec_locality=="Moss Landing State Beach" | spec_locality=="Mark Stromberg's picnic table, Hastings Natural History Reservation, Carmel Valley"
-                                         | spec_locality=="4.5 mi W Shinn Peaks" | spec_locality=="2 mi N and 0.5 mi W Markleeville" | spec_locality=="1 mi E Benton" | spec_locality=="south end of Point Reyes Beach, Point Reyes"
-                                         | spec_locality=="Chalfant Valley, ca. 1 mi S Chalfant" | spec_locality=="Upper Shake Campground, 3 mi S and 4 mi E Three Points"| spec_locality=="Martin Rd., Hastings Natural History Reservation"
-                                         | spec_locality=="1 mi E Benton" | spec_locality=="Valley View Drive, Stanislaus National Forest" | spec_locality== "S of Dinkey Creek Rd., 1 mi S and 3 mi E town of Shaver Lake"
-                                         | spec_locality=="N of Dinkey Creek Rd., 2 mi S and 8 mi E town of Shaver Lake" | spec_locality=="University of California Sierra Foothill Range Field Station, 4.5 mi N Smartville"
-                                         | spec_locality=="Eable Lake" | spec_locality=="10 mi S Davis Creek" | spec_locality=="Goose Lake at southern causeway" | spec_locality=="Finch Creek, near entrance to Hastings Natural History Reservation"
-                                         | spec_locality=="0.5 mi W Hi Mountain Campground, 3 mi S and 2.5 mi W Pozo"
-                                         , "active", "salvage"))
+## look at each one separately...
 
-
-## same date, different localities (3 or more of same date) ### QUESTION TO NICK: DO THESE MAKE SENSE BEFORE I ASSIGN AS ACTIVELY-COLLECTED???
-# entrance to Elkhorn Slough, Moss Landing, Elkhorn Slough, Moss Landing, barn, Blue Oak Ranch Reserve, Clam Beach County Park, Clam Beach,
-# near Clam Beach; Elkhorn Slough, Moss Landing; 
-# 24-Jan-07: Aptos: Fern Flat Rd.; Big Lake, Blue Oak Ranch Reserve; Corralitos: Hames Road; Hastings Entry Lane at Big Creek crossing, Hastings Natural History Reservation;
-# 24-Jan-07: School House, Hastings Natural History Reservation; 
-# 26-Nov-05: Carmel Valley Rd. at mile marker 19.5; Carmel Valley Rd. at mile marker 21; Santa Cruz: Stephen st. & Emeline ave.
-# 26-Nov-12: Matilija Creek drainage, mouth of Murietta Canyon; Santa Cruz: FAC House; Santa Cruz:307 Laguna St.
-# 30-Nov-07: Empire Grade: Creek Bed; Moss Landing State Beach; UCSC Arboretum; Zmudowski State Beach
-# 31-May-06: Oakhurst: Episcopal Conference Center; Prather: Morgan Canyon: 30705 Pennyroyal Lane; Santa Cruz: 115 Effey St.; Windmill Meadow (50 m S of windmill), Blue Oak Ranch Reserve
-# 5-May-06: Fresno Wastewater Treatment Plant; Fresno Wastewater Treatment Plant: Jensen & Cornelia Aves.; Fresno wastewater treatment plant, Jensen & Cornelia aves.
-# 7/25/2005 & 7/24/2005 & 7/23/2005: Eable Lake, Eagle Lake
-
-w <- w %>% mutate(coll_method_ = ifelse(coll_method == "salvage" | coll_method_9 =="salvage", "salvage", "active"))
+#w <- w %>% mutate(coll_method_ = ifelse(coll_method == "salvage" | coll_method_9 =="salvage", "salvage", "active"))
 
 
 unknown_coll_method <- w[c('scientific_name', 'dec_lat', 'dec_long','coll_method_')]
