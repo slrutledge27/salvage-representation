@@ -32,8 +32,19 @@ z <- z %>% filter(!(collecting_method=="recording" | collecting_method  =="obser
 ### NEED TO DEAL WITH ONE MEASUREMENT #### has quotes inside, causing issues with recognizing it as salvage
 z <- z %>% mutate(coll_method = ifelse(coll_method_3 == "active","active", "salvage"))
 
+z <- z %>%
+  separate(guid, into = c("collection", "taxa", "catalog"), sep = ":", remove = FALSE)
+
+## see collection entries
+unique(z$collection)
+#  "MVZ"    "MVZObs" "UWYMV"  "MLZ"    "UCM"    "UTEP"   "UMZM"   "UCSC"   "DMNS"
+
+## keep only "MLZ" and "MVZ" records
+z <- z %>% filter(collection == "MVZ" | collection == "MLZ")
+
+unique(z$collection)
 ### subset to keep only needed columns
-known_coll_method <- z[c('scientific_name', 'dec_lat', 'dec_long','coll_method')]
+known_coll_method <- z[c('guid','accn_number','spec_locality','scientific_name', 'dec_lat', 'dec_long','coll_method')]
 
 ##### for unknown dataset...
 ### assign as salvage based on locality, parts
@@ -68,25 +79,56 @@ unknown_localities<- w[which(w$coll_method == "unknown"),] %>% group_by(guid, ac
 # import csv with new collecting method column
 Arctos_unknown_methods_added <- read.csv("./Data/Arctos_unknown_localities_method_added.csv")
 m <- Arctos_unknown_methods_added
+
+## string split
+m <- m %>%
+  separate(guid, into = c("collection", "taxa", "catalog"), sep = ":", remove = FALSE)
+
+## see collection entries
+unique(m$collection)
+#  "MLZ"    "MVZ"    "MVZObs" "NMU"    "UAM"    "UCSC"   "UMNH"   "UTEP"   "UWYMV"
+
+## keep only "MLZ" and "MVZ" records
+m <- m %>% filter(collection == "MVZ" | collection == "MLZ")
+
+## now look at new methods added...
+unique(m$method)
+## ""        "shotgun" "salvage" "trap"    "mistnet"
+
+## assign as "salvage" or "active" in new column
+m <- m %>% mutate(added_method = ifelse(method == "shotgun" | method =="trap" | method =="mistnet", "active", "salvage"))
+
+
+## string split
+w <- w %>%
+  separate(guid, into = c("collection", "taxa", "catalog"), sep = ":", remove = FALSE)
+
+## see collection entries
+unique(w$collection)
+#  "MVZ"    "MLZ"    "UAM"    "NMU"    "UMNH"   "UTEP"   "UWYMV"  "MVZObs" "UCSC"
+
+## keep only "MLZ" and "MVZ" records
+w <- w %>% filter(collection == "MVZ" | collection == "MLZ")
+
 ##keep only necessary columns in w for merging
 k <- w[c('guid','accn_number','spec_locality','verbatim_date','scientific_name', 'dec_lat', 'dec_long','coll_method')]
 
 ## merge 
 b <-merge(k, m, by=c('guid', 'accn_number', 'spec_locality'), all=TRUE)
-c <-merge(m, k, by=c('guid', 'accn_number', 'spec_locality'), all=TRUE)
+#c <-merge(m, k, by=c('guid', 'accn_number', 'spec_locality'), all=TRUE)
 
 # getting 1671 obs. when it should be 1664...figure out duplicate entries
-guids<- b%>% group_by(guid) %>% 
-  summarize(count=n())
+#guids<- b%>% group_by(guid) %>% 
+  #summarize(count=n())
 
 ## 2 each of: MVZ:Bird:180675, MVZ:Bird:181745, MVZ:Bird:181769, MVZ:Bird:181770, MVZ:Bird:181771, MVZ:Bird:183090, MVZ:Bird:183163
 
-## look at each one separately...
+## look at each one separately...issues with different date formats...solution: do not merge by verbatim date...problem solved
 
-#w <- w %>% mutate(coll_method_ = ifelse(coll_method == "salvage" | coll_method_9 =="salvage", "salvage", "active"))
+## make new collecting method column
+b <- b %>% mutate(coll_method_ = ifelse(coll_method == "salvage" | added_method =="salvage", "salvage", "active"))
 
-
-unknown_coll_method <- w[c('scientific_name', 'dec_lat', 'dec_long','coll_method_')]
+unknown_coll_method <- b[c('guid','accn_number','spec_locality','scientific_name', 'dec_lat', 'dec_long','coll_method_')]
 unknown_coll_method <- unknown_coll_method %>% 
   rename(
     coll_method = coll_method_)
@@ -95,5 +137,8 @@ Arctos_all <- rbind(unknown_coll_method, known_coll_method)
 
 ### if no dec_lat & dec_long, remove from dataset
 Arctos_all<-Arctos_all[!is.na(Arctos_all$dec_lat),]
+
+## check that every entry has an entry for coll_method
+unique(Arctos_all$coll_method)
 write.csv(Arctos_all, "./Data/Arctos_all.csv")
 
