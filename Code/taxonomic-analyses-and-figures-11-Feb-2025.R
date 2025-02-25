@@ -18,19 +18,18 @@ cor.test(count_proportional_byorder$log_salvage_species_prop,count_proportional_
 cor.test(count_proportional_byorder$log_salvage_specimen_prop,count_proportional_byorder$log_active_specimen_prop)
 
 ## make rownames into separate column
-count_proportional_byorder <- tibble::rownames_to_column(count_proportional_byorder, "order") 
+#count_proportional_byorder <- tibble::rownames_to_column(count_proportional_byorder, "order") 
 
 ## now plot
-ggplot(data = count_proportional_byorder, aes(x = log_salvage_species_prop, y = log_active_species_prop, color = order)) +
+ggplot(data = count_proportional_byorder, aes(x = log_salvage_species_prop, y = log_active_species_prop, color = X)) +
   # Scatterplot with point size
   geom_point() +
   geom_smooth(method = "lm", color = "red", se = FALSE)+
-  # Show dots
-  #geom_text(
-  #label=order_species_wide$order, 
-  #nudge_x = 0.1, nudge_y = 0.1, 
-  #check_overlap = T, size = 2
-  # )+
+  geom_text(
+  label=count_proportional_byorder$X, 
+  nudge_x = 0.1, nudge_y = 0.1, 
+  check_overlap = T, size = 2
+   )+
   #annotate("text", x = min(order_species_wide$log_salvage), y = max(order_species_wide$log_active), label = eq_text, hjust = 0, size = 5, color = "darkred")+
   labs( 
     x = "log-transformed count of salvaged species", 
