@@ -142,3 +142,32 @@ Arctos_all<-Arctos_all[!is.na(Arctos_all$dec_lat),]
 unique(Arctos_all$coll_method)
 write.csv(Arctos_all, "./Data/Arctos_all.csv")
 
+## get raw counts of specimens, percentages
+nrow(Arctos_all[Arctos_all$coll_method == "salvage",]) # 2373
+
+nrow(Arctos_all[Arctos_all$coll_method == "active",]) # 2423
+
+## get counts of number of orders represented
+nrow(species_per_order_all_NAM[species_per_order_all_NAM$coll_method == "salvage",]) # 19
+
+nrow(species_per_order_all_NAM[species_per_order_all_NAM$coll_method == "active",]) # 19
+
+
+##### get counts of species and orders represented
+## clean up scientific_name column
+Arctos_all <- Arctos_all %>%
+  separate(scientific_name, into = c("genus", "species", "other"), sep = " ", remove = FALSE)
+
+Arctos_all$genus_species <- paste(Arctos_all$genus,Arctos_all$species)
+
+## split by collecting method
+df_salvage <- Arctos_all[which(Arctos_all$coll_method == "salvage"),]
+df_active <- Arctos_all[which(Arctos_all$coll_method == "active"),]
+
+## get count
+species_count_active <- df_active %>% group_by(genus_species)%>% summarize(count=n())
+species_count_salvage <- df_salvage %>% group_by(genus_species)%>% summarize(count=n())
+
+print(intersect(species_count_active$genus_species,species_count_salvage$genus_species)) # 109 species represented by both active and salvage
+
+## 109/159 (actively collected species count) = x/100 ; 109/231 (salvaged species count) = x/100
