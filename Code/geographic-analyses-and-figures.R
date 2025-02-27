@@ -77,8 +77,8 @@ plot(plot_data["pop_den_plot"])
 par(mar = c(3, 3, 1, 1))
 plot(log(active_counts[populated_cell_index]+1),log(salvage_counts[populated_cell_index]+1),cex.axis = 1.00, ann = FALSE)
 
-cor.test(log(active_counts+1),log(salvage_counts+1))#Correlation is negative and significant. There is an inverse correlation between salvage and active specmien counts.
-abline(lm(log(salvage_counts+1)~log(active_counts+1)))
+cor.test(log(active_counts[populated_cell_index]+1),log(salvage_counts[populated_cell_index]+1))#Correlation is negative and significant. There is an inverse correlation between salvage and active specmien counts.
+abline(lm(log(salvage_counts[populated_cell_index]+1)~log(active_counts[populated_cell_index]+1)))
 
 
 ### Panel E: Active vs Pop Density ###

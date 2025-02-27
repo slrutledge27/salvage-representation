@@ -39,11 +39,11 @@ ggplot(data = count_proportional_byorder, aes(x = log_salvage_species_prop, y = 
     color = "Order") +  # Legend title
   theme_minimal() 
 
-ggplot(data = count_proportional_byorder, aes(x = log_salvage_specimen_prop, y = log_active_specimen_prop, color = order)) +
+ggplot(data = count_proportional_byorder, aes(x = specimen_count_salvage_proportional, y = specimen_count_active_proportional, color = X)) +
   geom_point() +  # Scatterplot with point size
   geom_smooth(method = "lm", color = "red", se = FALSE)+
   geom_text(
-   label=count_proportional_byorder$order, 
+   label=count_proportional_byorder$X, 
    nudge_x = 0.1, nudge_y = 0.1, 
    check_overlap = T, size = 2
    )+
