@@ -1,117 +1,76 @@
 library(tidyverse)
 library(dplyr)
 library(ggplot2)
+library(data.table)
 
-### read in cleaned csv file 
-Arctos_all<-read.csv("./Data/Arctos_all.csv")
-keeps<-c("coll_method","genus_species")
-Arctos_all<-Arctos_all[keeps]
+### Table 1
+## remove extra column 
+## species per order represented by salvaged and actively-collected specimens
+species_per_order <- species_per_order_all_NAM[ , !(names(species_per_order_all_NAM) %in% c("count_proportional"))]
+species_per_order <- species_per_order[ , -1]
+species_per_order <- species_per_order %>%
+  pivot_wider(names_from = coll_method, values_from = count)
 
-### import NACC species list
-NACC <-read.csv("./Data/NACC_list_species.csv")
+colnames(species_per_order)[c(2, 3)] <- c("salvaged_species", "actively-collected_species")
 
-### select columns to keep in NACC for specimen tally (order, family, species)
-keeps<-c("order","family","species")
-species_list<-NACC[keeps]
 
-##rename column
-colnames(species_list)[3] = "genus_species"
+## specimens per order represented by salvaged and actively-collected specimens
+specimens_per_order <- specimens_per_order_all_NAM[ , !(names(specimens_per_order_all_NAM) %in% c("count_proportional"))]
+specimens_per_order <- specimens_per_order[ , -1]
+specimens_per_order <- specimens_per_order %>%
+  pivot_wider(names_from = coll_method, values_from = count)
 
-### merge to Arctos_all by genus_species
-Arctos_orders <- merge(Arctos_all, species_list, by="genus_species")
+colnames(specimens_per_order)[c(2, 3)] <- c("salvaged_specimens", "actively-collected_specimens")
+## merge tables together for Table 1
+Table_1 <- merge(species_per_order, specimens_per_order, by = "order")
+Table_1[is.na(Table_1)] <- 0
 
-## investigate unmatched entries
-# unmatched <- anti_join(Arctos_all, species_list, by="genus_species")
-### get specimen count per order
-specimen_count<-Arctos_orders%>% group_by(order, coll_method) %>% 
-  summarize(count=n())
+write.csv(Table_1, "./Figures/Table_1.csv")
 
-##get counts for species by order in NACC
-Order_species_count <- NACC %>% 
-  filter(!is.na(species)) %>%
-  group_by(species) %>% 
-  summarise(order = first(order), n = n())
-
-## rename columns
-colnames(Order_species_count)[1]<- "genus_species"
-
-## merge NACC Order_species_count with Arctos_all by genus_species
-Arctos_order_species <- left_join(Arctos_all, Order_species_count, by = "genus_species")
-
-## select columns to keep
-keeps<-c("coll_method", "order","genus_species")
-Arctos_order_species<-Arctos_order_species[keeps]
-
-## remove NA's
-Arctos_order_species<- Arctos_order_species %>% filter(!is.na(order))
-
-## now count species per order
-species_count<- Arctos_order_species %>% 
-  filter(!is.na(genus_species)) %>%
-  group_by(order, genus_species,coll_method) %>% 
-  summarize(count=n())
-
-species_count_per_order<- species_count %>% 
-  group_by(order,coll_method) %>% 
-  summarize(count=n())
-## write to csv
-write.csv(specimen_count, "./Data/specimens_per_order_all.csv")
-write.csv(species_count_per_order, "./Data/species_per_order_all.csv")
-
-### NOTE: need to remove weird first column if re-importing csv files
-#specimen_count[1] <- NULL
-#species_count_per_order[1] <- NULL
-
-### build a scatter plot; active vs salvage number of species per order
-## pivot table
-order_species_wide <- species_count_per_order %>%
-  pivot_wider(names_from = coll_method, 
-              values_from = count,    
-              values_fill = 0)
-
-order_specimens_wide <- specimen_count %>%
-  pivot_wider(names_from = coll_method,  
-              values_from = count,    
-              values_fill = 0)
-
+### Now log-transform for analyses
 ## log transform data (very skewed)
-order_species_wide$log_active <- log(order_species_wide$active+1)
-order_species_wide$log_salvage <- log(order_species_wide$salvage+1)
+count_proportional_byorder$log_active_species_prop <- log(count_proportional_byorder$species_count_active_proportional+1)
+count_proportional_byorder$log_salvage_species_prop <- log(count_proportional_byorder$species_count_salvage_proportional+1)
 
-order_specimens_wide$log_active <- log(order_specimens_wide$active+1)
-order_specimens_wide$log_salvage <- log(order_specimens_wide$salvage+1)
+count_proportional_byorder$log_active_specimen_prop <- log(count_proportional_byorder$specimen_count_active_proportional+1)
+count_proportional_byorder$log_salvage_specimen_prop <- log(count_proportional_byorder$specimen_count_salvage_proportional+1)
 
-## test for correlations
-cor.test(order_species_wide$log_active,order_species_wide$log_salvage)#Correlation is negative and significant. There is an inverse correlation between salvage and active specmien counts.
-## report effect size, p-value, se
-cor.test(order_specimens_wide$log_active,order_specimens_wide$log_salvage)#Correlation is negative and significant. There is an inverse correlation between salvage and active specmien counts.
+write.csv(count_proportional_byorder, "./Data/proportion_dataset_for_analyses_and_plotting.csv")
+
+count_proportional_byorder <-read.csv("./Data/proportion_dataset_for_analyses_and_plotting.csv")
+
+### Correlation tests ###
+cor.test(count_proportional_byorder$log_salvage_species_prop,count_proportional_byorder$log_active_species_prop)
+cor.test(count_proportional_byorder$log_salvage_specimen_prop,count_proportional_byorder$log_active_specimen_prop)
+
+## make rownames into separate column
+#count_proportional_byorder <- tibble::rownames_to_column(count_proportional_byorder, "order") 
 
 ## now plot
-ggplot(data = order_species_wide, aes(x = log_salvage, y = log_active, color = order)) +
-    # Scatterplot with point size
+ggplot(data = count_proportional_byorder, aes(x = log_salvage_species_prop, y = log_active_species_prop, color = X)) +
+  # Scatterplot with point size
   geom_point() +
   geom_smooth(method = "lm", color = "red", se = FALSE)+
-  # Show dots
-  #geom_text(
-    #label=order_species_wide$order, 
-    #nudge_x = 0.1, nudge_y = 0.1, 
-    #check_overlap = T, size = 2
- # )+
-  annotate("text", x = min(order_species_wide$log_salvage), y = max(order_species_wide$log_active), label = eq_text, hjust = 0, size = 5, color = "darkred")+
+  geom_text(
+  label=count_proportional_byorder$X, 
+  nudge_x = 0.1, nudge_y = 0.1, 
+  check_overlap = T, size = 2
+   )+
+  #annotate("text", x = min(order_species_wide$log_salvage), y = max(order_species_wide$log_active), label = eq_text, hjust = 0, size = 5, color = "darkred")+
   labs( 
-       x = "log-transformed count of salvaged species", 
-       y = "log-transformed count of actively collected species",
-       color = "Order") +  # Legend title
+    x = "log-transformed count of salvaged species", 
+    y = "log-transformed count of actively collected species",
+    color = "Order") +  # Legend title
   theme_minimal() 
 
-ggplot(data = order_specimens_wide, aes(x = log_salvage, y = log_active, color = order)) +
+ggplot(data = count_proportional_byorder, aes(x = specimen_count_salvage_proportional, y = specimen_count_active_proportional, color = X)) +
   geom_point() +  # Scatterplot with point size
   geom_smooth(method = "lm", color = "red", se = FALSE)+
-  #geom_text(
-   # label=order_specimens_wide$order, 
-    #nudge_x = 0.1, nudge_y = 0.1, 
-    #check_overlap = T, size = 2
-  #)+
+  geom_text(
+   label=count_proportional_byorder$X, 
+   nudge_x = 0.1, nudge_y = 0.1, 
+   check_overlap = T, size = 2
+   )+
   labs( 
     x = "log-transformed count of salvaged specimens", 
     y = "log-transformed count of actively collected specimens",
