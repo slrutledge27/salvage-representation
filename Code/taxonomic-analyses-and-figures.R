@@ -36,8 +36,10 @@ Arctos_all$genus_species[Arctos_all$genus_species=="Carpodacus purpureus"]<-"Hae
 
 Arctos_all<-Arctos_all[c(which(Arctos_all$genus_species %in% rownames(NACC)),grep("sp.",Arctos_all$genus_species)),]
 
+
 ### Save the cleaned MVZ Arctos data set to a new csv ###
 Arctos_cleaned<-Arctos_all
+
 
 ### Read in and analyze eBird data to figure out how many species of each order could be present in the specimen data set ###
 eBird_CA<-read.csv("./Data/ebird_US-CA__1950_2025_1_12_barchart.csv",row.names=1)
@@ -65,7 +67,10 @@ species_pool_df$order[is.na(species_pool_df$order)]<-c("Charadriiformes","Charad
 Arctos_missing_from_pool<-unique(Arctos_cleaned$genus_species[!Arctos_cleaned$genus_species %in% species_pool_df$species])
 
 Arctos_missing_from_pool_df<-data.frame(species=Arctos_missing_from_pool,order=rep(NA,length(Arctos_missing_from_pool)))
-Arctos_missing_from_pool_df$order<-c("Apodiformes","Galliformes","Piciformes","Passeriformes","Strigiformes","Passeriformes","Passeriformes","Passeriformes","Passeriformes","Passeriformes","Galliformes","Gruiformes","Accipitriformes","Charadriiformes","Accipitriformes","Strigiformes","Strigiformes","Charadriiformes","Falconiformes","Passeriformes","Strigiformes","Strigiformes","Gaviiformes","Passeriformes","Strigiformes","Charadriiformes","Passeriformes","Apodiformes","Apodiformes","Strigiformes","Apodiformes")
+Arctos_missing_from_pool_df <- Arctos_missing_from_pool_df[-c(13,37),]
+Arctos_missing_from_pool_df$order<-c("Accipitriformes","Strigiformes","Strigiformes","Strigiformes","Procellariiformes","Passeriformes","Procellariiformes","Piciformes","Passeriformes","Passeriformes","Charadriiformes","Passeriformes","Gruiformes","Accipitriformes","Charadriiformes","Apodiformes","Galliformes","Piciformes","Suliformes","Passeriformes","Charadriiformes","Charadriiformes","Procellariiformes","Strigiformes","Falconiformes","Passeriformes","Strigiformes","Gaviiformes","Passeriformes","Passeriformes","Passeriformes","Passeriformes","Strigiformes","Charadriiformes","Passeriformes")
+
+#Arctos_missing_from_pool_df$order<-c("Apodiformes","Galliformes","Piciformes","Passeriformes","Strigiformes","Passeriformes","Passeriformes","Passeriformes","Passeriformes","Passeriformes","Galliformes","Gruiformes","Accipitriformes","Charadriiformes","Accipitriformes","Strigiformes","Strigiformes","Charadriiformes","Falconiformes","Passeriformes","Strigiformes","Strigiformes","Gaviiformes","Passeriformes","Strigiformes","Charadriiformes","Passeriformes","Apodiformes","Apodiformes","Strigiformes","Apodiformes")
 species_pool_df<-rbind(species_pool_df,Arctos_missing_from_pool_df)
 
 species_pool_df<-species_pool_df[-grep("sp.",species_pool_df$species),]
@@ -100,7 +105,7 @@ colnames(Order_species_count)[1]<- "genus_species"
 Arctos_order_species <- left_join(Arctos_all, Order_species_count, by = "genus_species")
 
 unique(Arctos_order_species[Arctos_order_species$order=="Strigiformes","genus_species"])
-
+unique(Arctos_order_species$genus_species)
 ## select columns to keep
 keeps<-c("coll_method", "order","genus_species")
 Arctos_order_species<-Arctos_order_species[keeps]

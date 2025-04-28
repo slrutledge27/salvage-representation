@@ -77,7 +77,7 @@ unknown_localities<- w[which(w$coll_method == "unknown"),] %>% group_by(guid, ac
 #write.csv(unknown_localities, "./Data/Arctos_unknown_localities.csv")
 ## upon obtaining response from Carla...
 # import csv with new collecting method column
-Arctos_unknown_methods_added <- read.csv("./Data/Arctos_unknown_localities_method_added.csv")
+Arctos_unknown_methods_added <- read.csv("./Data/Table_S1-unknown_localities_method_added.csv")
 m <- Arctos_unknown_methods_added
 
 ## string split
@@ -140,6 +140,11 @@ Arctos_all<-Arctos_all[!is.na(Arctos_all$dec_lat),]
 
 ## check that every entry has an entry for coll_method
 unique(Arctos_all$coll_method)
+Arctos_all <- Arctos_all %>%
+  separate(scientific_name, into = c("genus", "species", "other"), sep = " ", remove = FALSE)
+
+Arctos_all$genus_species <- paste(Arctos_all$genus,Arctos_all$species)
+
 write.csv(Arctos_all, "./Data/Arctos_all.csv")
 
 ## get raw counts of specimens, percentages
@@ -153,12 +158,6 @@ nrow(species_per_order_all_NAM[species_per_order_all_NAM$coll_method == "salvage
 nrow(species_per_order_all_NAM[species_per_order_all_NAM$coll_method == "active",]) # 19
 
 
-##### get counts of species and orders represented
-## clean up scientific_name column
-Arctos_all <- Arctos_all %>%
-  separate(scientific_name, into = c("genus", "species", "other"), sep = " ", remove = FALSE)
-
-Arctos_all$genus_species <- paste(Arctos_all$genus,Arctos_all$species)
 
 ## split by collecting method
 df_salvage <- Arctos_all[which(Arctos_all$coll_method == "salvage"),]
