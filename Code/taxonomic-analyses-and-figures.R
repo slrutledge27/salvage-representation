@@ -145,32 +145,77 @@ write.csv(species_count_per_order, "./Data/species_per_order.csv")
 specimens_per_order <- specimen_count
 species_per_order <- species_count_per_order
 
+
 ### Now log-transform for analyses
 ## log transform data (very skewed)
-count_proportional_byorder$log_active_species_prop <- log(count_proportional_byorder$species_count_active_proportional+1)
-count_proportional_byorder$log_salvage_species_prop <- log(count_proportional_byorder$species_count_salvage_proportional+1)
+#count_proportional_byorder$log_active_species_prop <- log(count_proportional_byorder$species_count_active_proportional+1)
+#count_proportional_byorder$log_salvage_species_prop <- log(count_proportional_byorder$species_count_salvage_proportional+1)
+species_per_order$log_species_prop <- log(species_per_order$count_proportional+1)
 
-count_proportional_byorder$log_active_specimen_prop <- log(count_proportional_byorder$specimen_count_active_proportional+1)
-count_proportional_byorder$log_salvage_specimen_prop <- log(count_proportional_byorder$specimen_count_salvage_proportional+1)
+#count_proportional_byorder$log_active_specimen_prop <- log(count_proportional_byorder$specimen_count_active_proportional+1)
+#count_proportional_byorder$log_salvage_specimen_prop <- log(count_proportional_byorder$specimen_count_salvage_proportional+1)
+specimens_per_order$log_specimens_prop <- log(specimens_per_order$count_proportional+1)
 
-write.csv(count_proportional_byorder, "./Data/proportion_dataset_for_analyses_and_plotting.csv")
+### pivot tables
+species_per_order <- species_per_order %>%
+  pivot_wider(
+    names_from = coll_method,
+    values_from = c(count, count_proportional, log_species_prop)
+  )
 
-count_proportional_byorder <-read.csv("./Data/proportion_dataset_for_analyses_and_plotting.csv")
+
+specimens_per_order <- specimens_per_order %>%
+  pivot_wider(
+    names_from = coll_method,
+    values_from = c(count, count_proportional, log_specimens_prop)
+  )
+
+## replace NAs with 0
+species_per_order[is.na(species_per_order)] <- 0
+
+specimens_per_order[is.na(specimens_per_order)] <- 0
+
+
+## rename columns prior to merging
+species_per_order <- species_per_order %>%
+  rename(
+    species_count_salvage = count_salvage,
+    species_count_active = count_active,
+    species_count_prop_salvage = count_proportional_salvage,
+    species_count_prop_active = count_proportional_active
+  )
+
+specimens_per_order <- specimens_per_order %>%
+  rename(
+    specimens_count_salvage = count_salvage,
+    specimens_count_active = count_active,
+    specimens_count_prop_salvage = count_proportional_salvage,
+    specimens_count_prop_active = count_proportional_active
+  )
+
+
+## now merge
+
+taxa_dataset <- merge(species_per_order, specimens_per_order, by = "order")
+
+write.csv(taxa_dataset, "./Data/taxa_dataset_for_analyses_and_plotting.csv")
+
+#taxa_dataset <-read.csv("./Data/taxa_dataset_for_analyses_and_plotting.csv")
 
 ### Correlation tests ###
-cor.test(count_proportional_byorder$log_salvage_species_prop,count_proportional_byorder$log_active_species_prop)
-cor.test(count_proportional_byorder$log_salvage_specimen_prop,count_proportional_byorder$log_active_specimen_prop)
+cor.test(taxa_dataset$log_species_prop_salvage,taxa_dataset$log_species_prop_active)
+cor.test(taxa_dataset$log_specimens_prop_salvage,taxa_dataset$log_specimens_prop_active)
 
 ## make rownames into separate column
-#count_proportional_byorder <- tibble::rownames_to_column(count_proportional_byorder, "order") 
+#taxa_dataset <- tibble::rownames_to_column(taxa_dataset, "order") 
 
 ## now plot
-ggplot(data = count_proportional_byorder, aes(x = log_salvage_species_prop, y = log_active_species_prop, color = X)) +
+ggplot(data = taxa_dataset, aes(x = log_species_prop_salvage, y = log_species_prop_active, color = X)) +
   # Scatterplot with point size
   geom_point() +
   geom_smooth(method = "lm", color = "red", se = FALSE)+
   geom_text(
-  label=count_proportional_byorder$X, 
+  label=taxa_dataset$X, 
   nudge_x = 0.1, nudge_y = 0.1, 
   check_overlap = T, size = 2
    )+
@@ -181,11 +226,11 @@ ggplot(data = count_proportional_byorder, aes(x = log_salvage_species_prop, y = 
     color = "Order") +  # Legend title
   theme_minimal() 
 
-ggplot(data = count_proportional_byorder, aes(x = specimen_count_salvage_proportional, y = specimen_count_active_proportional, color = X)) +
+ggplot(data = taxa_dataset, aes(x = specimen_count_prop_salvage, y = specimen_count_prop_active, color = X)) +
   geom_point() +  # Scatterplot with point size
   geom_smooth(method = "lm", color = "red", se = FALSE)+
   geom_text(
-   label=count_proportional_byorder$X, 
+   label=taxa_dataset$X, 
    nudge_x = 0.1, nudge_y = 0.1, 
    check_overlap = T, size = 2
    )+
