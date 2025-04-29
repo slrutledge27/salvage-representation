@@ -210,33 +210,33 @@ cor.test(taxa_dataset$log_specimens_prop_salvage,taxa_dataset$log_specimens_prop
 #taxa_dataset <- tibble::rownames_to_column(taxa_dataset, "order") 
 
 ## now plot
-ggplot(data = taxa_dataset, aes(x = log_species_prop_salvage, y = log_species_prop_active, color = X)) +
+ggplot(data = taxa_dataset, aes(x = log_species_prop_salvage, y = log_species_prop_active, color = order)) +
   # Scatterplot with point size
   geom_point() +
   geom_smooth(method = "lm", color = "red", se = FALSE)+
   geom_text(
-  label=taxa_dataset$X, 
+  label=taxa_dataset$order, 
   nudge_x = 0.1, nudge_y = 0.1, 
   check_overlap = T, size = 2
    )+
   #annotate("text", x = min(order_species_wide$log_salvage), y = max(order_species_wide$log_active), label = eq_text, hjust = 0, size = 5, color = "darkred")+
   labs( 
-    x = "log-transformed count of salvaged species", 
-    y = "log-transformed count of actively collected species",
+    x = "log-transformed proportional count of salvaged species", 
+    y = "log-transformed proportional count of actively collected species",
     color = "Order") +  # Legend title
   theme_minimal() 
 
-ggplot(data = taxa_dataset, aes(x = specimen_count_prop_salvage, y = specimen_count_prop_active, color = X)) +
+ggplot(data = taxa_dataset, aes(x = log_specimens_prop_salvage, y = log_specimens_prop_active, color = order)) +
   geom_point() +  # Scatterplot with point size
   geom_smooth(method = "lm", color = "red", se = FALSE)+
   geom_text(
-   label=taxa_dataset$X, 
+   label=taxa_dataset$order, 
    nudge_x = 0.1, nudge_y = 0.1, 
    check_overlap = T, size = 2
    )+
   labs( 
-    x = "log-transformed count of salvaged specimens", 
-    y = "log-transformed count of actively collected specimens",
+    x = "log-transformed proportional count of salvaged specimens", 
+    y = "log-transformed proportional count of actively collected specimens",
     color = "Order") +  # Legend title
   theme_minimal() 
 
