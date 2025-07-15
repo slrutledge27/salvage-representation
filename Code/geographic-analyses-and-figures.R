@@ -1,6 +1,14 @@
 library(sf) #for managing vectors
 library(terra) #for managing rasters
 library(exactextractr)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(ggnewscale)
+library(patchwork)
+library(magick)
+library(cowplot)
+library(grid)
 
 ### Read in GeoTiff of population density data ###
 pop_density<-rast("./Shapefiles/gpw_v4_population_density_rev11_2020_15_min.tif")
@@ -10,7 +18,6 @@ pop_density_utm<-terra:::project(pop_density,"+proj=utm +zone=10")
 all_data<-read.csv("./Data/Arctos_all.csv")
 salvage<-all_data[all_data$coll_method=="salvage",]
 active<-all_data[all_data$coll_method=="active",]
-
 
 ### Change data format for each set of coordinates so they can be analyzed by the grid below ###
 active_sf <- st_as_sf(active, coords = c("dec_long", "dec_lat"), crs = 4326)  
@@ -57,65 +64,126 @@ salvage_counts<-lengths(salvage_intersect)
 ### Create a vector index for those grid cells that have either a salvage or an active specimen ###
 populated_cell_index<-which(!(active_counts==0 & salvage_counts==0))
 
+### Combine these into a single data frame for plotting with ggplot2
+count_data<-data.frame(log_active_counts=log(active_counts[populated_cell_index]+1),log_salvage_counts=log(salvage_counts[populated_cell_index]+1),human_pop_density=log(popdensity_values[populated_cell_index]+1))
+  
 ### Create spatial feature object that combines the grid polygon with our active, salvage, and popdensity data log transformed for plotting ###
-plot_data<-st_as_sf(CA_grid[CA_UTM],active_plot=log(active_counts+1),salvage_plot=log(salvage_counts+1),pop_den_plot=log(popdensity_values))
+count_polygons<-st_as_sf(CA_grid[CA_UTM],id=1:length(active_counts),active_plot=log(active_counts+1),salvage_plot=log(salvage_counts+1),pop_den_plot=log(popdensity_values+1))
 
-### Draft figure 2 column width, 6 panels. 2 rows x 3 columns. Top row is rasters and grid values, bottom row is scatterplots correlation tests ###
-### Panel A: Actively Collected Specimens ###
-par(mar = c(0, 0, 0, 0))
-plot(plot_data["active_plot"],ann=FALSE)
+active_count_poly <- count_polygons %>% select(value = active_plot)
+salvage_count_poly <- count_polygons %>% select(value = salvage_plot)
+pop_den_poly <- count_polygons %>% select(value = pop_den_plot)
 
-### Panel B: Salvaged Specimens ###
-par(mar = c(0, 0, 0, 0))
-plot(plot_data["salvage_plot"])
+shared_theme_poly <- theme(
+  plot.margin = unit(c(2, 2, 2, 2), "pt"),  # tight margins
+  axis.text = element_text(size = 8),      # same size text
+  legend.position.inside = c(0.8, 0.8),
+  legend.key.height = unit(0.3, "cm"),  
+  legend.key.width = unit(0.4, "cm"), 
+  axis.text.x = element_text(size = 6), 
+  axis.text.y = element_text(size = 6), 
+  legend.text = element_text(size = 6),
+  legend.title = element_text(size = 6),
+  plot.title = element_text(size = 8, face = "bold", hjust = 0.5)
+  )
 
-### Panel C: Population Density ###
-par(mar = c(0, 0, 0, 0))
-plot(plot_data["pop_den_plot"])
+shared_theme_scatter <- theme(
+  plot.margin = margin(2,2,2,2),  # tight margins
+  axis.text.x = element_text(size = 6), 
+  axis.text.y = element_text(size = 6),
+  axis.title.x = element_text(size = 6),
+  axis.title.y = element_text(size = 6),
+  coord_fixed()  # Match aspect ratio
+)
 
-### Panel D: Active vs Salvage ###
-par(mar = c(3, 3, 1, 1))
-plot(log(active_counts[populated_cell_index]+1),log(salvage_counts[populated_cell_index]+1),cex.axis = 1.00, ann = FALSE)
+shared_theme <- theme_void() +
+  theme(
+    plot.margin = unit(c(2, 2, 2, 2), "pt"),  # tight margins
+    axis.text = element_text(size = 8),      # same size text
+    legend.position = c(0.8, 0.8),
+    legend.key.height = unit(0.3, "cm"),  
+    legend.key.width = unit(0.4, "cm"), 
+    axis.text.x = element_text(size = 6), 
+    axis.text.y = element_text(size = 6), 
+    legend.text = element_text(size = 6),
+    legend.title = element_text(size = 6),
+    plot.title = element_text(size = 8, face = "bold", hjust = 0.5),
+    panel.border = element_rect(color = "black", fill = NA, linewidth = 1)
+  )
 
+p1 <- ggplot() +
+  geom_sf(data = active_count_poly, aes(fill = value)) +
+  labs(title="log(Active Specimen Counts)") +
+  scale_fill_viridis_c(name = "",option="plasma") +
+  shared_theme_poly +
+  coord_sf(expand=F)
+
+p2 <- ggplot() +
+  geom_sf(data = salvage_count_poly, aes(fill = value)) +
+  labs(title="log(Salvage Specimen Counts)") +
+  scale_fill_viridis_c(name = "",option="plasma") +
+  shared_theme_poly +
+  coord_sf(expand=F)
+
+p3 <- ggplot() +
+  geom_sf(data = pop_den_poly, aes(fill = value)) +
+  labs(title="log(Human Population Density)") +
+  scale_fill_viridis_c(name = "",option="plasma") +
+  shared_theme_poly +
+  coord_sf(expand=F)
+
+p4 <- ggplot(data=count_data,aes(x = log_active_counts, y = log_salvage_counts)) +
+  geom_point(size=1) +
+  theme_bw() +                         # clean white background with axes and grid
+  geom_smooth(method = "lm", se = TRUE) +  # Linear trend line with confidence interval
+  shared_theme_scatter +
+  labs(x = "log(Active Specimen Counts)", y = "log(Salvage Specimen Counts)") 
+
+p5 <- ggplot(data=count_data,aes(x = human_pop_density, y = log_active_counts)) +
+  geom_point(size=1) +
+  theme_bw() +                         # clean white background with axes and grid
+  geom_smooth(method = "lm", se = TRUE) +  # Linear trend line with confidence interval
+  shared_theme_scatter +
+  labs(x = "log(Human Population Density)", y = "log(Active Specimen Counts)") 
+
+p6 <- ggplot(data=count_data,aes(x = human_pop_density, y = log_salvage_counts)) +
+  geom_point(size=1) +
+  theme_bw() +                         # clean white background with axes and grid
+  geom_smooth(method = "lm", se = TRUE) +  # Linear trend line with confidence interval
+  shared_theme_scatter +
+  labs(x = "log(Human Population Density)", y = "log(Salvage Specimen Counts)") 
+
+png(file="./Figures/p1.png",width=6.5/3,height=6.5/3,units="in",res=500)
+print(p1)
+dev.off()
+
+png(file="./Figures/p2.png",width=6.5/3,height=6.5/3,units="in",res=500)
+print(p2)
+dev.off()
+
+png(file="./Figures/p3.png",width=6.5/3,height=6.5/3,units="in",res=500)
+print(p3)
+dev.off()
+
+png(file="./Figures/p4.png",width=6.5/3,height=6.5/3,units="in",res=500)
+print(p4)
+dev.off()
+
+png(file="./Figures/p5.png",width=6.5/3,height=6.5/3,units="in",res=500)
+print(p5)
+dev.off()
+
+png(file="./Figures/p6.png",width=6.5/3,height=6.5/3,units="in",res=500)
+print(p6)
+dev.off()
+
+### Output for results section ###
+
+## Panel D
 cor.test(log(active_counts[populated_cell_index]+1),log(salvage_counts[populated_cell_index]+1))#Correlation is negative and significant. There is an inverse correlation between salvage and active specmien counts.
-abline(lm(log(salvage_counts[populated_cell_index]+1)~log(active_counts[populated_cell_index]+1)))
 
-
-### Panel E: Active vs Pop Density ###
-par(mar = c(3, 3, 1, 1))
-plot(log(popdensity_values[populated_cell_index]+1),log(active_counts[populated_cell_index]+1), cex.axis = 1.00, ann = FALSE)
-
-abline(lm(log(active_counts[populated_cell_index]+1)~log(popdensity_values[populated_cell_index]+1)))
+## Panel E
 cor.test(log(popdensity_values[populated_cell_index]+1),log(active_counts[populated_cell_index]+1))
 
-
-### Panel F: Salvage vs Pop Density ###
-par(mar = c(3, 3, 1, 1))
-plot(log(popdensity_values[populated_cell_index]+1),log(salvage_counts[populated_cell_index]+1),  cex.axis = 1.00, ann = FALSE)
-
-abline(lm(log(salvage_counts[populated_cell_index]+1)~log(popdensity_values[populated_cell_index]+1)))
+## Panel F
 cor.test(log(popdensity_values[populated_cell_index]+1),log(salvage_counts[populated_cell_index]+1))
-
-
-### export plots to pdfs; read in pdfs to form 6-panel figure - THIS WORKS BETTER THAN EXPORTING AS PNGs!!!
-library(pdftools)
-library(magick)
-
-## need to convert pdfs into images
-pdf_files <- c("./Figures/p1.pdf", "./Figures/p2.pdf", "./Figures/p3.pdf", "./Figures/p4.pdf", "./Figures/p5.pdf", "./Figures/p6.pdf")
-
-# Convert each PDF to an image
-images <- lapply(pdf_files, function(pdf) {
-  image_read(pdf_render_page(pdf, page = 1, dpi = 300))
-})
-
-final_image <- image_append(c(
-  image_append(c(images[[1]], images[[2]], images[[3]]), stack = FALSE),
-  image_append(c(images[[4]], images[[5]], images[[6]]), stack = FALSE)
-), stack = TRUE)
-
-print(final_image)
-
-# Save output
-image_write(final_image, "./Figures/Salvage-figure.png")
-

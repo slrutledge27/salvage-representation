@@ -3,8 +3,6 @@ library(dplyr)
 library(ggplot2)
 library(stringr) #For cleaning eBird data to get order species counts for the state of California
 
-
-
 ### import NACC species list
 NACC <-read.csv("./Data/NACC_list_species.csv")
 rownames(NACC)<-NACC$species
