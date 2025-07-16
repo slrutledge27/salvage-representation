@@ -13,8 +13,8 @@
 
 # Data and shapefile sources
 Data was derived from the following sources:
-https://arctos.database.museum/
-earthdata.nasa.gov (gpw_v4_population_density_rev11_2020_15_min)
+https://arctos.database.museum/ and 
+https://earthdata.nasa.gov (gpw_v4_population_density_rev11_2020_15_min)
 
 Shapefiles obtained from:
 https://www2.census.gov/geo/tiger/TIGER2023/STATE/
