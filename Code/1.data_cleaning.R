@@ -152,11 +152,6 @@ nrow(Arctos_all[Arctos_all$coll_method == "salvage",]) # 2373
 
 nrow(Arctos_all[Arctos_all$coll_method == "active",]) # 2423
 
-## get counts of number of orders represented
-nrow(species_per_order_all_NAM[species_per_order_all_NAM$coll_method == "salvage",]) # 19
-
-nrow(species_per_order_all_NAM[species_per_order_all_NAM$coll_method == "active",]) # 19
-
 
 
 ## split by collecting method
