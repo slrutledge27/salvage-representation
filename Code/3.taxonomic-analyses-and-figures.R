@@ -2,6 +2,7 @@ library(tidyverse)
 library(dplyr)
 library(ggplot2)
 library(stringr) #For cleaning eBird data to get order species counts for the state of California
+library(patchwork)
 
 ### import NACC species list
 NACC <-read.csv("./Data/NACC_list_species.csv")
@@ -34,10 +35,8 @@ Arctos_all$genus_species[Arctos_all$genus_species=="Carpodacus purpureus"]<-"Hae
 
 Arctos_all<-Arctos_all[c(which(Arctos_all$genus_species %in% rownames(NACC)),grep("sp.",Arctos_all$genus_species)),]
 
-
 ### Save the cleaned MVZ Arctos data set to a new csv ###
 Arctos_cleaned<-Arctos_all
-
 
 ### Read in and analyze eBird data to figure out how many species of each order could be present in the specimen data set ###
 eBird_CA<-read.csv("./Data/ebird_US-CA__1950_2025_1_12_barchart.csv",row.names=1)
@@ -51,10 +50,13 @@ eBird_CA_yearlyabundance<-apply(eBird_CA,1,sum)
 eBird_CA_filter<-eBird_CA_yearlyabundance>0.1 #Can adjust this level to decide what species are included in the possible pool for each order
 
 species_pool<-rownames(eBird_CA)[which(eBird_CA_filter)]
+sort(species_pool)
 
 species_pool<-species_pool[-grep("sp[.]",species_pool)]
 species_pool<-species_pool[-grep("/",species_pool)]
 species_pool<-species_pool[-grep(" x ",species_pool)]
+
+sort(species_pool)
 
 ### Match species pool to our NACC-based taxonomy to get comprehensive species pool and Arctos datat set###
 species_pool_df<-data.frame(species=species_pool,order=NACC[species_pool,]$order)
@@ -70,8 +72,7 @@ Arctos_missing_from_pool_df$order<-c("Accipitriformes","Strigiformes","Strigifor
 
 #Arctos_missing_from_pool_df$order<-c("Apodiformes","Galliformes","Piciformes","Passeriformes","Strigiformes","Passeriformes","Passeriformes","Passeriformes","Passeriformes","Passeriformes","Galliformes","Gruiformes","Accipitriformes","Charadriiformes","Accipitriformes","Strigiformes","Strigiformes","Charadriiformes","Falconiformes","Passeriformes","Strigiformes","Strigiformes","Gaviiformes","Passeriformes","Strigiformes","Charadriiformes","Passeriformes","Apodiformes","Apodiformes","Strigiformes","Apodiformes")
 species_pool_df<-rbind(species_pool_df,Arctos_missing_from_pool_df)
-
-species_pool_df<-species_pool_df[-grep("sp.",species_pool_df$species),]
+species_pool_df<-species_pool_df[order(species_pool_df$order),]
 
 ### Final pool of potential species that could occur in the Arctos data set that we will use to examine species and specimen counts in proportion to these numbers ###
 species_pool_counts<-table(species_pool_df$order)
@@ -104,6 +105,7 @@ Arctos_order_species <- left_join(Arctos_all, Order_species_count, by = "genus_s
 
 unique(Arctos_order_species[Arctos_order_species$order=="Strigiformes","genus_species"])
 unique(Arctos_order_species$genus_species)
+
 ## select columns to keep
 keeps<-c("coll_method", "order","genus_species")
 Arctos_order_species<-Arctos_order_species[keeps]
@@ -122,7 +124,6 @@ species_count_per_order<- species_count %>%
   summarize(count=n())
 
 ## Divide counts by the number of possible species for each order to get a proportion ###
-i<-1
 specimen_count_proportional<-vector()
 for(i in 1:nrow(specimen_count)){
   specimen_count_proportional[i]<-specimen_count[i,]$count/species_pool_counts[as.character(specimen_count[i,1])]
@@ -143,11 +144,9 @@ write.csv(species_count_per_order, "./Data/species_per_order.csv")
 specimens_per_order <- specimen_count
 species_per_order <- species_count_per_order
 
-
 ### Now log-transform for analyses
 ## log transform data (very skewed)
 species_per_order$log_species_prop <- log(species_per_order$count_proportional+1)
-
 specimens_per_order$log_specimens_prop <- log(specimens_per_order$count_proportional+1)
 
 ### pivot tables
@@ -157,7 +156,6 @@ species_per_order <- species_per_order %>%
     values_from = c(count, count_proportional, log_species_prop)
   )
 
-
 specimens_per_order <- specimens_per_order %>%
   pivot_wider(
     names_from = coll_method,
@@ -166,7 +164,6 @@ specimens_per_order <- specimens_per_order %>%
 
 ## replace NAs with 0
 species_per_order[is.na(species_per_order)] <- 0
-
 specimens_per_order[is.na(specimens_per_order)] <- 0
 
 
@@ -189,7 +186,6 @@ specimens_per_order <- specimens_per_order %>%
 
 
 ## now merge
-
 taxa_dataset <- merge(species_per_order, specimens_per_order, by = "order")
 
 write.csv(taxa_dataset, "./Data/taxa_dataset_for_analyses_and_plotting.csv")
@@ -207,10 +203,10 @@ cor.test(taxa_dataset$log_specimens_prop_salvage,taxa_dataset$log_specimens_prop
 ggplot(data = taxa_dataset, aes(x = log_species_prop_salvage, y = log_species_prop_active, color = order)) +
   # Scatterplot with point size
   geom_point() +
-  geom_smooth(method = "lm", color = "red", se = FALSE)+
+  #geom_smooth(method = "lm", color = "red", se = FALSE)+
   geom_text(
   label=taxa_dataset$order, 
-  nudge_x = 0.1, nudge_y = 0.1, 
+  nudge_x = 0.0, nudge_y = 0.02, 
   check_overlap = T, size = 2
    )+
   #annotate("text", x = min(order_species_wide$log_salvage), y = max(order_species_wide$log_active), label = eq_text, hjust = 0, size = 5, color = "darkred")+
@@ -234,8 +230,6 @@ ggplot(data = taxa_dataset, aes(x = log_specimens_prop_salvage, y = log_specimen
     color = "Order") +  # Legend title
   theme_minimal() 
 
-
-
 ### Table 1
 ## remove extra column 
 ## species per order represented by salvaged and actively-collected specimens
@@ -245,7 +239,6 @@ species_per_order <- species_per_order %>%
   pivot_wider(names_from = coll_method, values_from = count)
 
 colnames(species_per_order)[c(2, 3)] <- c("salvaged_species", "actively-collected_species")
-
 
 ## specimens per order represented by salvaged and actively-collected specimens
 specimens_per_order <- specimens_per_order[ , !(names(specimens_per_order) %in% c("count_proportional"))]

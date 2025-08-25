@@ -2,6 +2,8 @@ library(tidyverse)
 library(dplyr)
 
 ######## Importing and cleaning data #####################################
+setwd("/Users/NickMason_1/Desktop/Manuscripts/SalvageCollections/salvage-representation-main_30Jul2025")
+
 #####Import raw data
 Arctos_birds_Calif_2000_2020 <- read.csv("./Data/Arctos_birds_Calif_2000_2020.csv")
 ##### filter
