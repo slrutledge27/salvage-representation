@@ -3,6 +3,7 @@ library(dplyr)
 library(ggplot2)
 library(stringr) #For cleaning eBird data to get order species counts for the state of California
 library(patchwork)
+library(openxlsx)
 require(VennDiagram)
 
 ### import NACC species list
@@ -43,6 +44,13 @@ Arctos_all<-Arctos_all[-grep("NA",Arctos_all$genus_species),] #Remove Selasphoru
 ### Save the cleaned MVZ Arctos data set to a new csv ###
 Arctos_cleaned<-Arctos_all
 
+
+### Species-level stats ###
+length(unique(Arctos_cleaned$genus_species)) #264 total species in the data set
+
+Arctos_salvaged<-Arctos_cleaned[Arctos_cleaned$coll_method=="salvage",]
+Arctos_active<-Arctos_cleaned[Arctos_cleaned$coll_method=="active",]
+
 ### Specimen-level stats ###
 nrow(Arctos_cleaned) #4978 total specimens
 nrow(Arctos_salvaged) #2420 salvaged specimens
@@ -50,11 +58,6 @@ nrow(Arctos_salvaged) / nrow(Arctos_cleaned) # 48.61% salvaged
 nrow(Arctos_active) #2558 active specimens
 nrow(Arctos_active) / nrow(Arctos_cleaned) # 51.37% active
 
-### Species-level stats ###
-length(unique(Arctos_cleaned$genus_species)) #264 total species in the data set
-
-Arctos_salvaged<-Arctos_cleaned[Arctos_cleaned$coll_method=="salvage",]
-Arctos_active<-Arctos_cleaned[Arctos_cleaned$coll_method=="active",]
 venn_both<-intersect(unique(Arctos_salvaged$genus_species),unique(Arctos_active$genus_species))
 length(venn_both) #109 are in both active and salvage
 venn_salvaged<-setdiff(unique(Arctos_salvaged$genus_species),unique(Arctos_active$genus_species))
@@ -106,6 +109,9 @@ species_pool_df<-species_pool_df[order(species_pool_df$order),]
 ### Final pool of potential species that could occur in the Arctos data set that we will use to examine species and specimen counts in proportion to these numbers ###
 species_pool_counts<-table(species_pool_df$order)
 sum(species_pool_counts) #351 possible species that could reasonably be salvaged or collected within California
+
+NACC_orders_phylogenetic_order_represented<-NACC_orders_phylogenetic_order[NACC_orders_phylogenetic_order %in% unique(Arctos_cleaned$order)]
+
 species_pool_counts<-species_pool_counts[NACC_orders_phylogenetic_order_represented]
 
 ### Get the order for each species in our cleaned data set ###
@@ -115,7 +121,6 @@ for(i in 1:nrow(Arctos_cleaned)){
   Arctos_cleaned$order[i]<-NACC[Arctos_cleaned$genus_species[i],]$order
 }
 
-NACC_orders_phylogenetic_order_represented<-NACC_orders_phylogenetic_order[NACC_orders_phylogenetic_order %in% unique(Arctos_cleaned$order)]
 
 ### Summary Specimen Counts by Order ###
 salvage_specimen_counts<-table(Arctos_cleaned[Arctos_cleaned$coll_method=="salvage",]$order)
