@@ -3,10 +3,17 @@ library(dplyr)
 library(ggplot2)
 library(stringr) #For cleaning eBird data to get order species counts for the state of California
 library(patchwork)
+library(VennDiagram)
+library(xlsx)
+
+setwd("/Users/NickMason_1/Desktop/Manuscripts/SalvageCollections/salvage-representation-main_24Aug2025")
 
 ### import NACC species list
 NACC <-read.csv("./Data/NACC_list_species.csv")
 rownames(NACC)<-NACC$species
+
+NACC_orders_phylogenetic_order<-unique(NACC$order)
+length(unique(NACC$order))
 
 ### read in cleaned csv file 
 Arctos_all<-read.csv("./Data/Arctos_all.csv")
@@ -34,9 +41,34 @@ Arctos_all$genus_species[Arctos_all$genus_species=="Carpodacus mexicanus"]<-"Hae
 Arctos_all$genus_species[Arctos_all$genus_species=="Carpodacus purpureus"]<-"Haemorhous purpureus"
 
 Arctos_all<-Arctos_all[c(which(Arctos_all$genus_species %in% rownames(NACC)),grep("sp.",Arctos_all$genus_species)),]
+Arctos_all<-Arctos_all[-grep("NA",Arctos_all$genus_species),] #Remove Selasphorus NA, other Selasphorus are included
 
 ### Save the cleaned MVZ Arctos data set to a new csv ###
 Arctos_cleaned<-Arctos_all
+Arctos_salvaged<-Arctos_cleaned[Arctos_cleaned$coll_method=="salvage",]
+Arctos_active<-Arctos_cleaned[Arctos_cleaned$coll_method=="active",]
+
+### Specimen-level stats ###
+nrow(Arctos_cleaned) #4978 total specimens
+nrow(Arctos_salvaged) #2420 salvaged specimens
+nrow(Arctos_salvaged) / nrow(Arctos_cleaned) # 48.61% salvaged
+nrow(Arctos_active) #2558 active specimens
+nrow(Arctos_active) / nrow(Arctos_cleaned) # 51.37% active
+
+### Species-level stats ###
+length(unique(Arctos_cleaned$genus_species)) #264 total species in the data set
+
+venn_both<-intersect(unique(Arctos_salvaged$genus_species),unique(Arctos_active$genus_species))
+length(venn_both) #109 are in both active and salvage
+venn_salvaged<-setdiff(unique(Arctos_salvaged$genus_species),unique(Arctos_active$genus_species))
+length(venn_salvaged) #106 are only salvaged
+venn_active<-setdiff(unique(Arctos_active$genus_species),unique(Arctos_salvaged$genus_species))
+length(venn_active) #49 are only active
+
+## Venn Diagram Figure ##
+png(file="./Figures/activesalvage_venndiagram_v1.png",res=500,width=3.25,height=3.25,units="in")
+draw.pairwise.venn(length(venn_active)+length(venn_both),length(venn_salvaged)+length(venn_both),length(venn_both),fill=c("#FF000070","#0000FF70"))
+dev.off()
 
 ### Read in and analyze eBird data to figure out how many species of each order could be present in the specimen data set ###
 eBird_CA<-read.csv("./Data/ebird_US-CA__1950_2025_1_12_barchart.csv",row.names=1)
@@ -57,15 +89,16 @@ species_pool<-species_pool[-grep("/",species_pool)]
 species_pool<-species_pool[-grep(" x ",species_pool)]
 
 sort(species_pool)
+length(species_pool)#316 possible species based on eBird
 
-### Match species pool to our NACC-based taxonomy to get comprehensive species pool and Arctos datat set###
+### Match species pool to our NACC-based taxonomy to get comprehensive species pool and Arctos data set###
 species_pool_df<-data.frame(species=species_pool,order=NACC[species_pool,]$order)
 
 ### Assigning the NAs to orders in the pool ###
 species_pool_df$order[is.na(species_pool_df$order)]<-c("Charadriiformes","Charadriiformes","Pelecaniformes","Pelecaniformes","Accipitriformes","Strigiformes","Passeriformes")
 
+### Matching up Arctos taxonomy and NACC taxonomy ###
 Arctos_missing_from_pool<-unique(Arctos_cleaned$genus_species[!Arctos_cleaned$genus_species %in% species_pool_df$species])
-
 Arctos_missing_from_pool_df<-data.frame(species=Arctos_missing_from_pool,order=rep(NA,length(Arctos_missing_from_pool)))
 Arctos_missing_from_pool_df <- Arctos_missing_from_pool_df[-c(13,37),]
 Arctos_missing_from_pool_df$order<-c("Accipitriformes","Strigiformes","Strigiformes","Strigiformes","Procellariiformes","Passeriformes","Procellariiformes","Piciformes","Passeriformes","Passeriformes","Charadriiformes","Passeriformes","Gruiformes","Accipitriformes","Charadriiformes","Apodiformes","Galliformes","Piciformes","Suliformes","Passeriformes","Charadriiformes","Charadriiformes","Procellariiformes","Strigiformes","Falconiformes","Passeriformes","Strigiformes","Gaviiformes","Passeriformes","Passeriformes","Passeriformes","Passeriformes","Strigiformes","Charadriiformes","Passeriformes")
@@ -76,179 +109,56 @@ species_pool_df<-species_pool_df[order(species_pool_df$order),]
 
 ### Final pool of potential species that could occur in the Arctos data set that we will use to examine species and specimen counts in proportion to these numbers ###
 species_pool_counts<-table(species_pool_df$order)
+sum(species_pool_counts) #351 possible species that could reasonably be salvaged or collected within California
 
-### select columns to keep in NACC for specimen tally (order, family, species)
-keeps<-c("order","family","species")
-species_list<-NACC[keeps]
+### Get the order for each species in our cleaned data set ###
+Arctos_cleaned$order<-rep(NA,nrow(Arctos_cleaned))
 
-##rename column
-colnames(species_list)[3] = "genus_species"
-
-### merge to Arctos_all by genus_species
-Arctos_orders <- merge(Arctos_all, species_list, by="genus_species")
-
-### get specimen count per order
-specimen_count<-Arctos_orders%>% group_by(order, coll_method) %>% 
-  summarize(count=n())
-
-##get counts for species by order in NACC
-Order_species_count <- NACC %>% 
-  filter(!is.na(species)) %>%
-  group_by(species) %>% 
-  summarise(order = first(order), n = n())
-
-## rename columns
-colnames(Order_species_count)[1]<- "genus_species"
-
-## merge NACC Order_species_count with Arctos_all by genus_species
-Arctos_order_species <- left_join(Arctos_all, Order_species_count, by = "genus_species")
-
-unique(Arctos_order_species[Arctos_order_species$order=="Strigiformes","genus_species"])
-unique(Arctos_order_species$genus_species)
-
-## select columns to keep
-keeps<-c("coll_method", "order","genus_species")
-Arctos_order_species<-Arctos_order_species[keeps]
-
-## remove NA's
-Arctos_order_species<- Arctos_order_species %>% filter(!is.na(order))
-
-## now count species per order
-species_count<- Arctos_order_species %>% 
-  filter(!is.na(genus_species)) %>%
-  group_by(order, genus_species,coll_method) %>% 
-  summarize(count=n())
-
-species_count_per_order<- species_count %>% 
-  group_by(order,coll_method) %>% 
-  summarize(count=n())
-
-## Divide counts by the number of possible species for each order to get a proportion ###
-specimen_count_proportional<-vector()
-for(i in 1:nrow(specimen_count)){
-  specimen_count_proportional[i]<-specimen_count[i,]$count/species_pool_counts[as.character(specimen_count[i,1])]
+for(i in 1:nrow(Arctos_cleaned)){
+  Arctos_cleaned$order[i]<-NACC[Arctos_cleaned$genus_species[i],]$order
 }
-specimen_count<-cbind(specimen_count,count_proportional=specimen_count_proportional)
 
-species_count_proportional<-vector()
-for(i in 1:nrow(species_count_per_order)){
-  species_count_proportional[i]<-species_count_per_order[i,]$count/species_pool_counts[as.character(specimen_count[i,1])]
+NACC_orders_phylogenetic_order_represented<-NACC_orders_phylogenetic_order[NACC_orders_phylogenetic_order %in% unique(Arctos_cleaned$order)]
+length(NACC_orders_phylogenetic_order_represented) #number of orders in our dataset
+
+species_pool_counts<-species_pool_counts[NACC_orders_phylogenetic_order_represented]
+
+### Summary Specimen Counts by Order ###
+salvage_specimen_counts<-table(Arctos_cleaned[Arctos_cleaned$coll_method=="salvage",]$order)
+salvage_specimen_counts<-salvage_specimen_counts[NACC_orders_phylogenetic_order_represented]
+
+active_specimen_counts<-table(Arctos_cleaned[Arctos_cleaned$coll_method=="active",]$order)
+active_specimen_counts<-active_specimen_counts[NACC_orders_phylogenetic_order_represented]
+names(active_specimen_counts)<-NACC_orders_phylogenetic_order_represented
+active_specimen_counts[is.na(active_specimen_counts)]<-0
+
+### Summary Species Counts by Order ###
+salvage_species_counts<-Arctos_cleaned[Arctos_cleaned$coll_method=="salvage",]$order[!duplicated(Arctos_cleaned[Arctos_cleaned$coll_method=="salvage",]$genus_species)]
+salvage_species_counts<-table(salvage_species_counts)
+salvage_species_counts<-salvage_species_counts[NACC_orders_phylogenetic_order_represented]
+length(salvage_species_counts)
+sort(salvage_species_counts)
+
+active_species_counts<-Arctos_cleaned[Arctos_cleaned$coll_method=="active",]$order[!duplicated(Arctos_cleaned[Arctos_cleaned$coll_method=="active",]$genus_species)]
+active_species_counts<-table(active_species_counts)
+active_species_counts<-active_species_counts[NACC_orders_phylogenetic_order_represented]
+names(active_species_counts)<-NACC_orders_phylogenetic_order_represented
+active_species_counts[is.na(active_species_counts)]<-0
+length(which(active_species_counts>0))
+sort(active_species_counts)
+
+### Combine to make Table 1 for paper ###
+rutledge_etal_table1<-cbind(salvage_species_counts,active_species_counts,salvage_specimen_counts,active_specimen_counts)
+write.xlsx(rutledge_etal_table1,file="./Tables/Rutledge_etal_salvagevsactive_table1_v1.xlsx")
+
+### Look for correlations in taxonomic data set ###
+taxonomy_table_corr<-rutledge_etal_table1
+for(i in 1:ncol(taxonomy_table_corr)){
+  taxonomy_table_corr[,i]<-taxonomy_table_corr[,i]/species_pool_counts
 }
-species_count_per_order<-cbind(species_count_per_order,count_proportional=species_count_proportional)
 
-## write to csv
-write.csv(specimen_count, "./Data/specimens_per_order.csv")
-write.csv(species_count_per_order, "./Data/species_per_order.csv")
-#species_per_order <- read.csv("./Data/species_per_order.csv")
-#specimens_per_order <- read.csv("./Data/specimens_per_order.csv")
-specimens_per_order <- specimen_count
-species_per_order <- species_count_per_order
+plot(taxonomy_table_corr[,1],taxonomy_table_corr[,2])
+cor.test(taxonomy_table_corr[,1],taxonomy_table_corr[,2]) #Report this in results
 
-### Now log-transform for analyses
-## log transform data (very skewed)
-species_per_order$log_species_prop <- log(species_per_order$count_proportional+1)
-specimens_per_order$log_specimens_prop <- log(specimens_per_order$count_proportional+1)
-
-### pivot tables
-species_per_order <- species_per_order %>%
-  pivot_wider(
-    names_from = coll_method,
-    values_from = c(count, count_proportional, log_species_prop)
-  )
-
-specimens_per_order <- specimens_per_order %>%
-  pivot_wider(
-    names_from = coll_method,
-    values_from = c(count, count_proportional, log_specimens_prop)
-  )
-
-## replace NAs with 0
-species_per_order[is.na(species_per_order)] <- 0
-specimens_per_order[is.na(specimens_per_order)] <- 0
-
-
-## rename columns prior to merging
-species_per_order <- species_per_order %>%
-  rename(
-    species_count_salvage = count_salvage,
-    species_count_active = count_active,
-    species_count_prop_salvage = count_proportional_salvage,
-    species_count_prop_active = count_proportional_active
-  )
-
-specimens_per_order <- specimens_per_order %>%
-  rename(
-    specimens_count_salvage = count_salvage,
-    specimens_count_active = count_active,
-    specimens_count_prop_salvage = count_proportional_salvage,
-    specimens_count_prop_active = count_proportional_active
-  )
-
-
-## now merge
-taxa_dataset <- merge(species_per_order, specimens_per_order, by = "order")
-
-write.csv(taxa_dataset, "./Data/taxa_dataset_for_analyses_and_plotting.csv")
-
-#taxa_dataset <-read.csv("./Data/taxa_dataset_for_analyses_and_plotting.csv")
-
-### Correlation tests ###
-cor.test(taxa_dataset$log_species_prop_salvage,taxa_dataset$log_species_prop_active)
-cor.test(taxa_dataset$log_specimens_prop_salvage,taxa_dataset$log_specimens_prop_active)
-
-## make rownames into separate column
-#taxa_dataset <- tibble::rownames_to_column(taxa_dataset, "order") 
-
-## now plot
-ggplot(data = taxa_dataset, aes(x = log_species_prop_salvage, y = log_species_prop_active, color = order)) +
-  # Scatterplot with point size
-  geom_point() +
-  #geom_smooth(method = "lm", color = "red", se = FALSE)+
-  geom_text(
-  label=taxa_dataset$order, 
-  nudge_x = 0.0, nudge_y = 0.02, 
-  check_overlap = T, size = 2
-   )+
-  #annotate("text", x = min(order_species_wide$log_salvage), y = max(order_species_wide$log_active), label = eq_text, hjust = 0, size = 5, color = "darkred")+
-  labs( 
-    x = "log-transformed proportional count of salvaged species", 
-    y = "log-transformed proportional count of actively collected species",
-    color = "Order") +  # Legend title
-  theme_minimal() 
-
-ggplot(data = taxa_dataset, aes(x = log_specimens_prop_salvage, y = log_specimens_prop_active, color = order)) +
-  geom_point() +  # Scatterplot with point size
-  geom_smooth(method = "lm", color = "red", se = FALSE)+
-  geom_text(
-   label=taxa_dataset$order, 
-   nudge_x = 0.1, nudge_y = 0.1, 
-   check_overlap = T, size = 2
-   )+
-  labs( 
-    x = "log-transformed proportional count of salvaged specimens", 
-    y = "log-transformed proportional count of actively collected specimens",
-    color = "Order") +  # Legend title
-  theme_minimal() 
-
-### Table 1
-## remove extra column 
-## species per order represented by salvaged and actively-collected specimens
-species_per_order <- species_per_order[ , !(names(species_per_order) %in% c("count_proportional"))]
-species_per_order <- species_per_order[ , -1]
-species_per_order <- species_per_order %>%
-  pivot_wider(names_from = coll_method, values_from = count)
-
-colnames(species_per_order)[c(2, 3)] <- c("salvaged_species", "actively-collected_species")
-
-## specimens per order represented by salvaged and actively-collected specimens
-specimens_per_order <- specimens_per_order[ , !(names(specimens_per_order) %in% c("count_proportional"))]
-specimens_per_order <- specimens_per_order[ , -1]
-specimens_per_order <- specimens_per_order %>%
-  pivot_wider(names_from = coll_method, values_from = count)
-
-colnames(specimens_per_order)[c(2, 3)] <- c("salvaged_specimens", "actively-collected_specimens")
-## merge tables together for Table 1
-Table_1 <- merge(species_per_order, specimens_per_order, by = "order")
-Table_1[is.na(Table_1)] <- 0
-
-write.csv(Table_1, "./Figures/Table_1.csv")
+plot(taxonomy_table_corr[,3],taxonomy_table_corr[,4])
+cor.test(taxonomy_table_corr[,3],taxonomy_table_corr[,4]) #Report this in results
