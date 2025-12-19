@@ -200,6 +200,15 @@ Arctos_all_season_prep_filtered[c('day', 'month','year')] <- str_split_fixed(Arc
 # add '20' in front of last two digits of year
 prefix_num <- 20
 Arctos_all_season_prep_filtered$year <- paste0(prefix_num, Arctos_all_season_prep_filtered$year)
-
 Arctos_all_season_prep_filtered <- Arctos_all_season_prep_filtered %>%
   unite(date, day, month, year, sep = "-")
+
+## convert messy dates to preferred format
+Arctos_all_season_prep_filtered <- Arctos_all_season_prep_filtered %>%      
+  mutate(date = parse_date(date))
+
+## convert date column into correct class
+Arctos_all_season_prep_filtered <- Arctos_all_season_prep_filtered %>%
+  mutate(date = lubridate::ymd(date))
+## verify column is now "Date" class
+class(Arctos_all_season_prep_filtered$date)
