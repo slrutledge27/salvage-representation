@@ -193,5 +193,13 @@ pacman::p_load(
 regex_pattern <- "^\\d{1,2}\\-"
 Arctos_all_season_prep_filtered <- Arctos_all_season_prep[grepl(regex_pattern, Arctos_all_season_prep$verbatim_date), ]
 
-
 ## convert two digit year to four digit year
+# split year into separate column
+library(stringr)
+Arctos_all_season_prep_filtered[c('day', 'month','year')] <- str_split_fixed(Arctos_all_season_prep_filtered$verbatim_date, '-', 3)
+# add '20' in front of last two digits of year
+prefix_num <- 20
+Arctos_all_season_prep_filtered$year <- paste0(prefix_num, Arctos_all_season_prep_filtered$year)
+
+Arctos_all_season_prep_filtered <- Arctos_all_season_prep_filtered %>%
+  unite(date, day, month, year, sep = "-")
