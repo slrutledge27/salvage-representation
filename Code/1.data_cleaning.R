@@ -167,3 +167,31 @@ species_count_salvage <- df_salvage %>% group_by(genus_species)%>% summarize(cou
 print(intersect(species_count_active$genus_species,species_count_salvage$genus_species)) # 109 species represented by both active and salvage
 
 ## 109/159 (actively collected species count) = x/100 ; 109/231 (salvaged species count) = x/100
+
+#### add in collecting dates and parts for seasonality and prep type analyses #####################################
+## subset raw data to include just guid, accn_number, verbatim_number, and parts
+Arctos_all_season_prep <- Arctos_birds_Calif_2000_2020[c('guid','accn_number','verbatim_date','parts')]
+
+## merge with Arctos_all
+Arctos_all_season_prep <- merge(Arctos_all_season_prep, Arctos_all, by = c("guid","accn_number"))
+
+## clean dates - make sure all are Gregorian calendar
+#unique(Arctos_all_season_prep$verbatim_date)
+library(lubridate)
+pacman::p_load(
+  lubridate,  # general package for handling and converting dates  
+  parsedate,  # has function to "guess" messy dates
+  aweek,      # another option for converting dates to weeks, and weeks to dates
+  zoo,        # additional date/time functions
+  here,       # file management
+  rio,        # data import/export
+  tidyverse)  # data management and visualization 
+
+
+### remove dates that do not have day, month, and year
+## format to keep = dd-Mon-yy
+regex_pattern <- "^\\d{1,2}\\-"
+Arctos_all_season_prep_filtered <- Arctos_all_season_prep[grepl(regex_pattern, Arctos_all_season_prep$verbatim_date), ]
+
+
+## convert two digit year to four digit year
