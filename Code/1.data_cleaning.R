@@ -175,6 +175,9 @@ Arctos_all_season_prep <- Arctos_birds_Calif_2000_2020[c('guid','accn_number','v
 ## merge with Arctos_all
 Arctos_all_season_prep <- merge(Arctos_all_season_prep, Arctos_all, by = c("guid","accn_number"))
 
+##########################################################################################
+#################################### DATES ###############################################
+##########################################################################################
 ## clean dates - make sure all are Gregorian calendar
 #unique(Arctos_all_season_prep$verbatim_date)
 library(lubridate)
@@ -212,3 +215,42 @@ Arctos_all_season_prep_filtered <- Arctos_all_season_prep_filtered %>%
   mutate(date = lubridate::ymd(date))
 ## verify column is now "Date" class
 class(Arctos_all_season_prep_filtered$date)
+
+write.csv(Arctos_all_season_prep_filtered, "./Data/Arctos_all_w_dates.csv")
+
+
+#################################################################################
+################################PREPS############################################
+#################################################################################
+## see what prep types are listed
+unique(Arctos_all_season_prep_filtered$parts)
+
+## split into SKIN, SKELETON, FLUID, OTHER
+
+Arctos_all_season_prep_filtered <- Arctos_all_season_prep_filtered %>%
+  mutate(PREP.skin = ifelse(str_detect(parts, regex("skin", ignore_case = TRUE)), "SKIN", "TBD"))
+
+Arctos_all_season_prep_filtered <- Arctos_all_season_prep_filtered %>%
+  mutate(PREP.skel = ifelse(str_detect(parts, regex("skeleton", ignore_case = TRUE)), "SKEL", "TBD"))
+
+Arctos_all_season_prep_filtered <- Arctos_all_season_prep_filtered %>%
+  mutate(PREP.fluid = ifelse(str_detect(parts, regex("whole organism", ignore_case = TRUE)), "FLUID", "TBD"))
+
+## break into separate datasets
+df_skin <- Arctos_all_season_prep_filtered[which(Arctos_all_season_prep_filtered$PREP.skin == "SKIN"),]
+df_skel <- Arctos_all_season_prep_filtered[which(Arctos_all_season_prep_filtered$PREP.skel == "SKEL" & Arctos_all_season_prep_filtered$PREP.skin == "TBD"),]
+df_fluid <- Arctos_all_season_prep_filtered[which(Arctos_all_season_prep_filtered$PREP.fluid == "FLUID"),]
+df_TBD <-Arctos_all_season_prep_filtered %>% filter(PREP.skin == "TBD" & PREP.skel == "TBD" & PREP.fluid == "TBD")
+
+## make new column
+df_skin <- df_skin %>% mutate(PREP = "skin")
+df_skel <- df_skel %>% mutate(PREP = "skel")
+df_fluid <- df_fluid %>% mutate(PREP = "fluid")
+
+
+Arctos_dates_preps <- rbind(df_skin, df_skel, df_fluid)
+Arctos_dates_preps$PREP.fluid <- NULL
+Arctos_dates_preps$PREP.skel <- NULL
+Arctos_dates_preps$PREP.skin <- NULL
+
+write.csv(Arctos_dates_preps, "./Data/Arctos_all_w_dates_preps.csv")
