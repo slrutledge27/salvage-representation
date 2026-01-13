@@ -246,9 +246,9 @@ df_TBD <-Arctos_all_season_prep_filtered %>% filter(PREP.skin == "TBD" & PREP.sk
 df_skin <- df_skin %>% mutate(PREP = "skin")
 df_skel <- df_skel %>% mutate(PREP = "skel")
 df_fluid <- df_fluid %>% mutate(PREP = "fluid")
+df_TBD <- df_TBD %>% mutate(PREP = "partial")
 
-
-Arctos_dates_preps <- rbind(df_skin, df_skel, df_fluid)
+Arctos_dates_preps <- rbind(df_skin, df_skel, df_fluid, df_TBD)
 Arctos_dates_preps$PREP.fluid <- NULL
 Arctos_dates_preps$PREP.skel <- NULL
 Arctos_dates_preps$PREP.skin <- NULL
