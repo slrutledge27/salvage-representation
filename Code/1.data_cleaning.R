@@ -252,5 +252,4 @@ Arctos_dates_preps <- rbind(df_skin, df_skel, df_fluid, df_TBD)
 Arctos_dates_preps$PREP.fluid <- NULL
 Arctos_dates_preps$PREP.skel <- NULL
 Arctos_dates_preps$PREP.skin <- NULL
-
 write.csv(Arctos_dates_preps, "./Data/Arctos_all_w_dates_preps.csv")
