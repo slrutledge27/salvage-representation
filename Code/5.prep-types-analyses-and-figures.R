@@ -1,9 +1,25 @@
+### get proportions
+Arctos_dates_preps
+df_salvage <- Arctos_dates_preps%>% filter(coll_method == "salvage")
+df_active <- Arctos_dates_preps%>% filter(coll_method == "active")
+
+prep_counts_salvage <- table(df_salvage$PREP)
+prop_preps_salvage <- as.data.frame(prop.table(prep_counts_salvage))
+
+prep_counts_active <- table(df_active$PREP)
+prop_preps_active <- as.data.frame(prop.table(prep_counts_active))
+
 df_skin <- Arctos_dates_preps%>% filter(PREP == "skin")
 df_skel <- Arctos_dates_preps %>% filter(PREP == "skel")
 df_fluid <- Arctos_dates_preps %>% filter(PREP == "fluid")
 df_partial <-Arctos_dates_preps %>% filter(PREP == "partial")
 
 ## get counts
+df_skin <- Arctos_dates_preps%>% filter(PREP == "skin")
+df_skel <- Arctos_dates_preps %>% filter(PREP == "skel")
+df_fluid <- Arctos_dates_preps %>% filter(PREP == "fluid")
+df_partial <-Arctos_dates_preps %>% filter(PREP == "partial")
+
 nrow(df_skin) #3444
 ## per active
 sum(df_skin$coll_method == "active") #2210
