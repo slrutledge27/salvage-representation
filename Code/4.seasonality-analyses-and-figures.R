@@ -2,9 +2,10 @@ library(tidyverse)
 library(ggplot2)
 library(viridis)
 library(lubridate)
+
 ## split Arctos_dates_preps date column into year + month/day
-#Arctos_dates_preps[c('year','month','day')] <- str_split_fixed(Arctos_dates_preps$date, '-', 3)
-#Arctos_dates_preps <- Arctos_dates_preps %>% unite(day_month, day, month, sep = "-")
+Arctos_dates_preps[c('year','month','day')] <- str_split_fixed(Arctos_dates_preps$date, '-', 3)
+Arctos_dates_preps <- Arctos_dates_preps %>% unite(day_month, day, month, sep = "-")
 
 ## convert between date formats
 Arctos_dates_preps$mdy_format <- format(Arctos_dates_preps$date, "%m-%d-%Y")
@@ -43,15 +44,15 @@ prop_month_active <- as.data.frame(prop.table(month_counts_active))
 #date_counts <- rbind(date_counts_salvage, date_counts_active)
 
 ## add month names for graphing
-Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 1, "1-Jan")
-Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 2, "2-Feb")
-Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 3, "3-Mar")
-Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 4, "4-Apr")
-Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 5, "5-May")
-Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 6, "6-Jun")
-Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 7, "7-Jul")
-Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 8, "8-AUg")
-Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 9, "9-Sep")
+Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 1, "01-Jan")
+Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 2, "02-Feb")
+Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 3, "03-Mar")
+Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 4, "04-Apr")
+Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 5, "05-May")
+Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 6, "06-Jun")
+Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 7, "07-Jul")
+Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 8, "08-Aug")
+Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 9, "09-Sep")
 Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 10, "10-Oct")
 Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 11, "11-Nov")
 Arctos_month_grouped$month <- replace(Arctos_month_grouped$month, Arctos_month_grouped$month == 12, "12-Dec")
@@ -65,12 +66,31 @@ Arctos_date_polar_chart_dm <- ggplot(Arctos_month_grouped, aes(x = month, y = co
  
 Arctos_date_polar_chart_dm
 
-
 Arctos_date_polar_chart <- ggplot(Arctos_month_grouped, aes(x = month, y = count, fill = coll_method)) +
-  geom_bar(position="stack", stat = "identity") +
-  coord_polar(start = 0) +  scale_fill_viridis_d(option = "viridis") +
+  geom_col(
+    position = "dodge",
+    width = 0.8
+  ) +
+  geom_vline(
+    data = data.frame(xintercept = seq_len(12) + 0.5),
+    aes(xintercept = xintercept),
+    linetype = "dotted",
+    linewidth = 0.4,
+    color = "grey60"
+  ) +
+  coord_polar(start = 0) +  
+  scale_fill_viridis_d(option = "viridis",labels = c("Active", "Salvage")) +
   xlab("Collecting Method") +
-  ylab("Specimen Count") + theme_minimal()
+  ylab("Specimen Count") + 
+  theme_minimal(base_size=10) +
+  theme(
+    panel.grid.major.x = element_blank(),          # remove default angular lines
+  )+
+  labs(fill = "Specimen Type") 
 
+## Polar bar chart with collecting methods side by side by month
+png(file="./Figures/SeasonalityFig_v2.png",width=6.5,height=6.5,units="in",res=500)
 Arctos_date_polar_chart
+dev.off()
 
+getwd()

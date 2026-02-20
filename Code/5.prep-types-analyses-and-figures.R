@@ -20,13 +20,40 @@ ggplot(Arctos_prep_grouped, aes(fill=PREP, y=count, x=coll_method)) +
   xlab("Collecting Method") +
   ylab("Specimen Count") + theme_minimal()
 
-## proportion
+## proportion as donut plot  09 Feb 2026
+Arctos_donut<-ggplot(Arctos_prep_grouped, aes(fill=PREP, y=count, x=coll_method)) + 
+  geom_bar(position="fill", stat="identity") + 
+  scale_fill_viridis_d(option = "viridis") +
+  xlab("") +
+  ylab("Proportion of Specimens") +
+  coord_polar(theta = "y") +
+  theme_minimal() +
+  labs(fill = "Specimen Type") +
+  theme(
+    axis.text.y  = element_blank()
+  ) +  
+  annotate("text",
+           x = 2,                 # radial position
+           y = 0.25,        # 25% around circle
+           label = "Salvage",
+           size = 4) +
+  annotate("text",
+           x = 1,                 # radial position
+           y = 0.25,        # 25% around circle
+           label = "Active",
+           size = 4)
+
+png(file="./Figures/PrepTypeDonut_v1.png",width=6.5,height=6.5,res=500,units="in")
+Arctos_donut
+dev.off()
+
 ggplot(Arctos_prep_grouped, aes(fill=PREP, y=count, x=coll_method)) + 
-  geom_bar(position="fill", stat="identity") + scale_fill_viridis_d(option = "viridis") +
+  geom_bar(position="fill", stat="identity") + 
+  scale_fill_viridis_d(option = "viridis") +
   xlab("Collecting Method") +
-  ylab("Proportion of Specimens") + theme_minimal()
-
-
+  ylab("Proportion of Specimens") +
+  coord_polar(theta = "y") +
+  theme_minimal()
 
 ## get counts
 df_skin <- Arctos_dates_preps%>% filter(PREP == "skin")

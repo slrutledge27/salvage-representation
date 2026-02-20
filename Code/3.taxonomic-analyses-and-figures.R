@@ -6,8 +6,6 @@ library(patchwork)
 library(VennDiagram)
 library(xlsx)
 
-setwd("/Users/NickMason_1/Desktop/Manuscripts/SalvageCollections/salvage-representation-main_24Aug2025")
-
 ### import NACC species list
 NACC <-read.csv("./Data/NACC_list_species.csv")
 rownames(NACC)<-NACC$species
