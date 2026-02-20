@@ -11,10 +11,10 @@ NACC <-read.csv("./Data/NACC_list_species.csv")
 rownames(NACC)<-NACC$species
 
 NACC_orders_phylogenetic_order<-unique(NACC$order)
-length(unique(NACC$order))
+length(unique(NACC$order)) #31
 
 ### read in cleaned csv file 
-Arctos_all<-read.csv("./Data/Arctos_all.csv")
+Arctos_all<-read.csv("./Data/Arctos_all_w_dates_preps.csv")
 
 head(Arctos_all)
 keeps<-c("guid","coll_method","genus_species")

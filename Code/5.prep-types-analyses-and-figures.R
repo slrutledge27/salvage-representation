@@ -1,11 +1,11 @@
 ### get proportions
-Arctos_dates_preps
+Arctos_all<-read.csv("./Data/Arctos_all_w_dates_preps.csv")
 ## group by coll method and prep type
-Arctos_prep_grouped <- Arctos_dates_preps %>% group_by(coll_method, PREP) %>% summarize(count = n())
+Arctos_prep_grouped <- Arctos_all %>% group_by(coll_method, PREP) %>% summarize(count = n())
 
 ## get proportions
-df_salvage <- Arctos_dates_preps%>% filter(coll_method == "salvage")
-df_active <- Arctos_dates_preps%>% filter(coll_method == "active")
+df_salvage <- Arctos_all%>% filter(coll_method == "salvage")
+df_active <- Arctos_all%>% filter(coll_method == "active")
 
 prep_counts_salvage <- table(df_salvage$PREP)
 prop_preps_salvage <- as.data.frame(prop.table(prep_counts_salvage))

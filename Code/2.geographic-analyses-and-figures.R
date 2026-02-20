@@ -15,9 +15,13 @@ pop_density<-rast("./Shapefiles/gpw_v4_population_density_rev11_2020_15_min.tif"
 pop_density_utm<-terra:::project(pop_density,"+proj=utm +zone=10")
 
 ### Read in raw occurence data for active and salvage specimens ###
-all_data<-read.csv("./Data/Arctos_all.csv")
+all_data<-read.csv("./Data/Arctos_all_w_dates_preps.csv")
 salvage<-all_data[all_data$coll_method=="salvage",]
 active<-all_data[all_data$coll_method=="active",]
+
+nrow(all_data) # 4703
+nrow(salvage) # 2284
+nrow(active) # 2419
 
 ### Change data format for each set of coordinates so they can be analyzed by the grid below ###
 active_sf <- st_as_sf(active, coords = c("dec_long", "dec_lat"), crs = 4326)  
