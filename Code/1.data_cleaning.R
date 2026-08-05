@@ -148,7 +148,7 @@ Arctos_all <- Arctos_all %>%
 
 Arctos_all$genus_species <- paste(Arctos_all$genus,Arctos_all$species)
 
-write.csv(Arctos_all, "./Data/Arctos_all.csv")
+write.csv(Arctos_all, "./Data/Arctos_all.v2.csv")
 
 ## get raw counts of specimens, percentages
 nrow(Arctos_all[Arctos_all$coll_method == "salvage",]) # 2373
@@ -158,12 +158,12 @@ nrow(Arctos_all[Arctos_all$coll_method == "active",]) # 2423
 
 
 ## split by collecting method
-df_salvage <- Arctos_all[which(Arctos_all$coll_method == "salvage"),]
-df_active <- Arctos_all[which(Arctos_all$coll_method == "active"),]
+df_salvage <- Arctos_all[which(Arctos_all$coll_method == "salvage"),] #2329?
+df_active <- Arctos_all[which(Arctos_all$coll_method == "active"),] #2553?
 
 ## get count
-species_count_active <- df_active %>% group_by(genus_species)%>% summarize(count=n())
-species_count_salvage <- df_salvage %>% group_by(genus_species)%>% summarize(count=n())
+species_count_active <- df_active %>% group_by(genus_species)%>% summarize(count=n()) #159?
+species_count_salvage <- df_salvage %>% group_by(genus_species)%>% summarize(count=n()) #231?
 
 print(intersect(species_count_active$genus_species,species_count_salvage$genus_species)) # 109 species represented by both active and salvage
 
@@ -196,6 +196,7 @@ pacman::p_load(
 ## format to keep = dd-Mon-yy
 regex_pattern <- "^\\d{1,2}\\-"
 Arctos_all_season_prep_filtered <- Arctos_all_season_prep[grepl(regex_pattern, Arctos_all_season_prep$verbatim_date), ]
+#4703?
 
 ## convert two digit year to four digit year
 # split year into separate column
@@ -214,10 +215,12 @@ Arctos_all_season_prep_filtered <- Arctos_all_season_prep_filtered %>%
 ## convert date column into correct class
 Arctos_all_season_prep_filtered <- Arctos_all_season_prep_filtered %>%
   mutate(date = lubridate::ymd(date))
+## 4703?
+
 ## verify column is now "Date" class
 class(Arctos_all_season_prep_filtered$date)
 
-write.csv(Arctos_all_season_prep_filtered, "./Data/Arctos_all_w_dates.csv")
+write.csv(Arctos_all_season_prep_filtered, "./Data/Arctos_all_w_dates.v2.csv")
 
 
 #################################################################################
@@ -253,4 +256,5 @@ Arctos_dates_preps <- rbind(df_skin, df_skel, df_fluid, df_TBD)
 Arctos_dates_preps$PREP.fluid <- NULL
 Arctos_dates_preps$PREP.skel <- NULL
 Arctos_dates_preps$PREP.skin <- NULL
-write.csv(Arctos_dates_preps, "./Data/Arctos_all_w_dates_preps.csv")
+write.csv(Arctos_dates_preps, "./Data/Arctos_all_w_dates_preps.v2.csv")
+## 4703?
