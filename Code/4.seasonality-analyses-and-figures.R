@@ -19,8 +19,8 @@ Arctos_all$month <- month(ymd(Arctos_all$date))
 Arctos_month_grouped <- Arctos_all %>% group_by(coll_method, month) %>% summarize(count = n())
 
 ### split into active and salvage
-df_salvage <- Arctos_all%>% filter(coll_method == "salvage")
-df_active <- Arctos_all%>% filter(coll_method == "active")
+df_salvage <- Arctos_all%>% filter(coll_method == "salvage") #2284
+df_active <- Arctos_all%>% filter(coll_method == "active") ## 2419
 
 ## calculate proportions
 month_counts_salvage <- table(df_salvage$month)

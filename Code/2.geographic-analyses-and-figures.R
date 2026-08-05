@@ -183,11 +183,40 @@ dev.off()
 
 ### Output for results section ###
 
-## Panel D
+## Panel E
 cor.test(log(active_counts[populated_cell_index]+1),log(salvage_counts[populated_cell_index]+1))#Correlation is negative and significant. There is an inverse correlation between salvage and active specmien counts.
 
-## Panel E
-cor.test(log(popdensity_values[populated_cell_index]+1),log(active_counts[populated_cell_index]+1))
+#Pearson's product-moment correlation
+#data:  log(active_counts[populated_cell_index] + 1) and log(salvage_counts[populated_cell_index] + 1)
+#t = -3.5239, df = 288, p-value = 0.0004944
+#alternative hypothesis: true correlation is not equal to 0
+#95 percent confidence interval:
+# -0.31120373 -0.09024544
+#sample estimates:
+#       cor 
+#-0.2033117 
 
 ## Panel F
+cor.test(log(popdensity_values[populated_cell_index]+1),log(active_counts[populated_cell_index]+1))
+#Pearson's product-moment correlation
+#data:  log(popdensity_values[populated_cell_index] + 1) and log(active_counts[populated_cell_index] + 1)
+#t = -5.9877, df = 288, p-value = 6.324e-09
+#alternative hypothesis: true correlation is not equal to 0
+#95 percent confidence interval:
+# -0.4313733 -0.2262150
+#sample estimates:
+#       cor 
+#-0.3327253 
+
+## Panel G
 cor.test(log(popdensity_values[populated_cell_index]+1),log(salvage_counts[populated_cell_index]+1))
+
+#Pearson's product-moment correlation
+#data:  log(popdensity_values[populated_cell_index] + 1) and log(salvage_counts[populated_cell_index] + 1)
+#t = 10.226, df = 288, p-value < 2.2e-16
+#alternative hypothesis: true correlation is not equal to 0
+#95 percent confidence interval:
+ #0.4262578 0.5958582
+#sample estimates:
+#      cor 
+#0.5160989 

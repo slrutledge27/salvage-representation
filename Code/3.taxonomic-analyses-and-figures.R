@@ -51,14 +51,14 @@ Arctos_salvaged<-Arctos_cleaned[Arctos_cleaned$coll_method=="salvage",]
 Arctos_active<-Arctos_cleaned[Arctos_cleaned$coll_method=="active",]
 
 ### Specimen-level stats ###
-nrow(Arctos_cleaned) #4978 total specimens ## 4645?
-nrow(Arctos_salvaged) #2420 salvaged specimens ## 2231?
-nrow(Arctos_salvaged) / nrow(Arctos_cleaned) # 48.61% salvaged ## 48.03 %?
-nrow(Arctos_active) #2558 active specimens ## 2414?
-nrow(Arctos_active) / nrow(Arctos_cleaned) # 51.37% active ## 51.970%?
+nrow(Arctos_cleaned) #total specimens ## 4645
+nrow(Arctos_salvaged) #salvaged specimens ## 2231
+nrow(Arctos_salvaged) / nrow(Arctos_cleaned) # salvaged ## 48.03 %
+nrow(Arctos_active) #active specimens ## 2414
+nrow(Arctos_active) / nrow(Arctos_cleaned) # active ## 51.97%
 
 ### Species-level stats ###
-length(unique(Arctos_cleaned$genus_species)) #264 total species in the data set ## 259?
+length(unique(Arctos_cleaned$genus_species)) #total species in the data set ## 259
 
 venn_both<-intersect(unique(Arctos_salvaged$genus_species),unique(Arctos_active$genus_species))
 length(venn_both) #108 are in both active and salvage # 108

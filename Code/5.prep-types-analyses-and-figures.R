@@ -4,8 +4,8 @@ Arctos_all<-read.csv("./Data/Arctos_all_w_dates_preps.csv")
 Arctos_prep_grouped <- Arctos_all %>% group_by(coll_method, PREP) %>% summarize(count = n())
 
 ## get proportions
-df_salvage <- Arctos_all%>% filter(coll_method == "salvage")
-df_active <- Arctos_all%>% filter(coll_method == "active")
+df_salvage <- Arctos_all%>% filter(coll_method == "salvage") #2419
+df_active <- Arctos_all%>% filter(coll_method == "active") #2284
 
 prep_counts_salvage <- table(df_salvage$PREP)
 prop_preps_salvage <- as.data.frame(prop.table(prep_counts_salvage))
@@ -56,10 +56,10 @@ ggplot(Arctos_prep_grouped, aes(fill=PREP, y=count, x=coll_method)) +
   theme_minimal()
 
 ## get counts
-df_skin <- Arctos_dates_preps%>% filter(PREP == "skin")
-df_skel <- Arctos_dates_preps %>% filter(PREP == "skel")
-df_fluid <- Arctos_dates_preps %>% filter(PREP == "fluid")
-df_partial <-Arctos_dates_preps %>% filter(PREP == "partial")
+df_skin <- Arctos_all%>% filter(PREP == "skin")
+df_skel <- Arctos_all %>% filter(PREP == "skel")
+df_fluid <- Arctos_all %>% filter(PREP == "fluid")
+df_partial <-Arctos_all %>% filter(PREP == "partial")
 
 nrow(df_skin) #3444
 ## per active
@@ -85,4 +85,4 @@ sum(df_partial$coll_method == "active") #64
 ## per salvage
 sum(df_partial$coll_method == "salvage") #136
 
-nrow(Arctos_dates_preps) #4703
+nrow(Arctos_all) #4703
