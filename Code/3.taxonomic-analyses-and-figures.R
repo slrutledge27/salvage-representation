@@ -201,18 +201,28 @@ salvage_specimen_counts<-table(Arctos_cleaned[Arctos_cleaned$coll_method=="salva
 salvage_specimen_counts<-salvage_specimen_counts[NACC_species_phylogenetic_order_represented]
 salvage_specimen_counts <- as.data.frame(salvage_specimen_counts)
 salvage_specimen_counts <- na.omit(salvage_specimen_counts)
-rownames(salvage_specimen_counts) <- salvage_specimen_counts[, 1]
+#rownames(salvage_specimen_counts) <- salvage_specimen_counts[, 1]
 salvage_specimen_counts <- arrange(salvage_specimen_counts, desc(Freq))
+salvage_specimen_counts <- salvage_specimen_counts %>% rename(species = Var1)
+salvage_specimen_counts <- salvage_specimen_counts %>% rename(count = Freq)
+
+write.csv(salvage_specimen_counts,file="./Tables/Rutledge_etal_salvagevsactive_tableS2.csv")
+
 
 active_specimen_counts<-table(Arctos_cleaned[Arctos_cleaned$coll_method=="active",]$genus_species)
 active_specimen_counts<-active_specimen_counts[NACC_species_phylogenetic_order_represented]
 active_specimen_counts <- as.data.frame(active_specimen_counts)
 active_specimen_counts <- na.omit(active_specimen_counts)
-rownames(active_specimen_counts) <- active_specimen_counts[, 1]
+#rownames(active_specimen_counts) <- active_specimen_counts[, 1]
 active_specimen_counts <- arrange(active_specimen_counts, desc(Freq))
+active_specimen_counts <- active_specimen_counts %>% rename(species = Var1)
+active_specimen_counts <- active_specimen_counts %>% rename(count = Freq)
+
+write.csv(active_specimen_counts,file="./Tables/Rutledge_etal_salvagevsactive_tableS3.csv")
+
 
 #### Supplementary Figures for Salvaged and Actively collected specimens by species
-salvage <- ggplot(salvage_specimen_counts, aes(x = reorder(species, -Freq), y = Freq)) +
+salvage <- ggplot(salvage_specimen_counts, aes(x = reorder(species, -count), y = count)) +
   geom_col(fill = "seagreen", color = "black", width = 1) + # Match 'width' to your interval size
   labs(title = "Salvaged Specimens by Species", x = "Species", y = "Specimen Count") +
   theme_minimal() + theme(
@@ -222,7 +232,7 @@ salvage <- ggplot(salvage_specimen_counts, aes(x = reorder(species, -Freq), y = 
 
 salvage
 
-active <- ggplot(active_specimen_counts, aes(x = reorder(species, -Freq), y = Freq)) +
+active <- ggplot(active_specimen_counts, aes(x = reorder(species, -count), y = count)) +
   geom_col(fill = "magenta", color = "black", width = 1) + # Match 'width' to your interval size
   labs(title = "Actively Collected Specimens by Species", x = "Species", y = "Specimen Count") +
   theme_minimal() + theme(
@@ -236,8 +246,6 @@ active
 
 ##### get number of species that were in species pool but not represented in either active or salvaged specimens
 ## Supplementary tables 1 and 2
-active_specimen_counts <- active_specimen_counts %>% rename(species = Var1)
-salvage_specimen_counts <- salvage_specimen_counts %>% rename(species = Var1)
 
 dropped_from_species_pool_active <- anti_join(species_pool_df, active_specimen_counts, by= "species")
 dropped_from_species_pool_salvage <- anti_join(species_pool_df, salvage_specimen_counts, by= "species")
@@ -245,6 +253,11 @@ dropped_from_species_pool_salvage <- anti_join(species_pool_df, salvage_specimen
 missing_from_both <- merge(dropped_from_species_pool_active, dropped_from_species_pool_salvage, by = "species")
 missing_from_both$order.y <- NULL
 missing_from_both <- missing_from_both %>% rename(order = order.x)
+
+missing_from_both_species <- missing_from_both
+missing_from_both_species$order <- NULL
+
+write.csv(missing_from_both_species,file="./Tables/Rutledge_etal_salvagevsactive_tableS1.csv")
 
 ### now get count of species missing per order, for Supplementary Figure 1
 missing_from_both_by_order <- missing_from_both %>%
