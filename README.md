@@ -27,4 +27,9 @@ All scripts were run in R.
 'geographic-analyses-and-figures' : used to run geographic analyses and construct maps in Figure 1. Inputs: gpw_v4_population_density_rev11_2020_15_min.tif, Arctos_all, tl_2023_us_state.shp 
 
 'taxonomic-analyses-and-figures' : used to run taxonimic analyses and generate Table 1. Inputs: Arctos_all, NACC_list_species, ebird_US-CA__1950_2025_1_12_barchart ; Outputs: specimens_per_order, species_per_order, taxa_dataset_for_analyses_and_plotting
+
+'seasonality-analyses-and-figures':  used to contstruct panel H in Figure 1
+
+'prep-types-analyses-and-figures':  used to contstruct panel I in Figure 1
+
  
