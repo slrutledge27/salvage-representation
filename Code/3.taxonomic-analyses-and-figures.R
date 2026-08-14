@@ -68,7 +68,7 @@ venn_active<-setdiff(unique(Arctos_active$genus_species),unique(Arctos_salvaged$
 length(venn_active) #47 are only active ## 47
 
 ## Venn Diagram Figure ##
-png(file="./Figures/activesalvage_venndiagram_v2.png",res=500,width=3.25,height=3.25,units="in")
+png(file="./Figures/activesalvage_venndiagram.png",res=500,width=3.25,height=3.25,units="in")
 draw.pairwise.venn(length(venn_active)+length(venn_both),length(venn_salvaged)+length(venn_both),length(venn_both),fill=c("#FF000070","#0000FF70"))
 dev.off()
 
