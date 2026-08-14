@@ -220,7 +220,7 @@ Arctos_all_season_prep_filtered <- Arctos_all_season_prep_filtered %>%
 ## verify column is now "Date" class
 class(Arctos_all_season_prep_filtered$date)
 
-write.csv(Arctos_all_season_prep_filtered, "./Data/Arctos_all_w_dates.v2.csv")
+#write.csv(Arctos_all_season_prep_filtered, "./Data/Arctos_all_w_dates.v2.csv")
 
 
 #################################################################################
@@ -256,5 +256,5 @@ Arctos_dates_preps <- rbind(df_skin, df_skel, df_fluid, df_TBD)
 Arctos_dates_preps$PREP.fluid <- NULL
 Arctos_dates_preps$PREP.skel <- NULL
 Arctos_dates_preps$PREP.skin <- NULL
-write.csv(Arctos_dates_preps, "./Data/Arctos_all_w_dates_preps.v2.csv")
-## 4703?
+write.csv(Arctos_dates_preps, "./Data/Arctos_all_w_dates_preps.csv")
+## 4703
